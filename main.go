@@ -55,6 +55,7 @@ func db() *gorm.DB {
 
 	migrate(db)
 
+	db.LogMode(true)
 	return db
 }
 

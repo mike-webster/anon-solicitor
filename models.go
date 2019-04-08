@@ -47,25 +47,35 @@ func (w *DBWrapper) Get() *gorm.DB {
 		w.db = db
 	}
 
+	w.db.LogMode(true)
 	return w.db
 }
 
 // User represents an application user.
 type User struct {
-	gorm.Model
-	Name  string
-	Email string
+	ID        uint `gorm:"primary_key"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time
+	Name      string
+	Email     string
 }
 
 // Feedback represents a user's opinion on an event.
 type Feedback struct {
-	gorm.Model
-	Content string
+	ID        uint `gorm:"primary_key"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time
+	Content   string
 }
 
 // Event represents a situation about which a user would like anonymous feedback.
 type Event struct {
-	gorm.Model
+	ID                 uint `gorm:"primary_key"`
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	DeletedAt          *time.Time
 	Name               string      `json:"name" binding:"required,max=100"`
 	Description        string      `json:"description" binding:"required,max=1000"`
 	Time               time.Time   `json:"scheduled_time" binding:"required"`
@@ -74,8 +84,20 @@ type Event struct {
 	Feedback           []Feedback  `binding:"-"`
 }
 
+// EventPutParams represents the information about an Event that a user can update.
+type EventPutParams struct {
+	ID          int64     `json:"id" binding:"required"`
+	Name        string    `json:"name"`
+	Description string    `json:"description" binding:"max=1000"`
+	Time        time.Time `json:"scheduled_time"`
+	OrganizerID int64
+}
+
 type Questions struct {
-	gorm.Model
-	Content string
-	Answers string
+	ID        uint `gorm:"primary_key"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time
+	Content   string
+	Answers   string
 }
