@@ -13,9 +13,7 @@ import (
 	"time"
 )
 
-const secret = "testsecret"
-
-func GetJWT() string {
+func GetJWT(secret string) string {
 	header := "{\"alg\": \"HS256\", \"typ\": \"JWT\"}"
 	payload := fmt.Sprintf("{\"iss\":\"%v\",\"exp\":\"%v\",\"admin\":%v,\"userid\":%v}",
 		"anon-solicitor", time.Now().UTC().Add(30*time.Minute).Unix(), false, 1)
@@ -30,7 +28,7 @@ func GetJWT() string {
 	return fmt.Sprintf("%v.%v.%v", s1, s2, s3)
 }
 
-func CheckToken(token string) error {
+func CheckToken(token string, secret string) error {
 	sections := strings.Split(token, ".")
 	if len(sections) != 3 {
 		// not correct format
