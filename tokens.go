@@ -13,12 +13,15 @@ import (
 	"time"
 )
 
-func GetJWT(secret string) string {
+const issuer = "anon-solicitor"
+
+// GetJWT will return a valid JWT containing the provided information
+func GetJWT(secret string, userID int64, isAdmin bool) string {
 	header := "{\"alg\": \"HS256\", \"typ\": \"JWT\"}"
 	payload := fmt.Sprintf("{\"iss\":\"%v\",\"exp\":\"%v\",\"admin\":%v,\"userid\":%v}",
-		"anon-solicitor", time.Now().UTC().Add(30*time.Minute).Unix(), false, 1)
-	h := hmac.New(sha256.New, []byte(secret))
+		issuer, time.Now().UTC().Add(30*time.Minute).Unix(), isAdmin, userID)
 
+	h := hmac.New(sha256.New, []byte(secret))
 	s1 := base64.URLEncoding.EncodeToString([]byte(header))
 	s2 := base64.URLEncoding.EncodeToString([]byte(payload))
 	h.Write([]byte(s1 + "." + s2))
@@ -28,6 +31,7 @@ func GetJWT(secret string) string {
 	return fmt.Sprintf("%v.%v.%v", s1, s2, s3)
 }
 
+// CheckToken will take a token an attempt to validate it using the given secret
 func CheckToken(token string, secret string) error {
 	sections := strings.Split(token, ".")
 	if len(sections) != 3 {
@@ -62,7 +66,7 @@ func CheckToken(token string, secret string) error {
 		switch k {
 		case "iss":
 			val, _ := v.(string)
-			if val != "anon-solicitor" {
+			if val != issuer {
 				return errors.New("invalid issuer")
 			}
 		case "exp":
