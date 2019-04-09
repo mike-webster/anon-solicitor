@@ -1,24 +1,37 @@
 package main
 
 import (
+	"context"
 	"log"
 	"time"
 
 	gin "github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
+	"github.com/mike-webster/anon-solicitor/data"
 )
 
 func main() {
+	ctx := context.Background()
 	log.Print("Sleeping to allow db setup...")
-	time.Sleep(2 * time.Second)
+	time.Sleep(10 * time.Second)
+
+	wrap := DBWrapper{}
+	wrap.Get()
+
+	ctx = context.WithValue(ctx, "db", wrap)
+	err := data.CreateTables(ctx)
+	if err != nil {
+		panic(*err)
+	}
 
 	r := setupRouter()
 	r.Run("0.0.0.0:3001")
 }
 
 func mwAttachDB(c *gin.Context) {
-	c.Set("db", DBWrapper{db()})
+	wrap := DBWrapper{}
+	wrap.Get()
+	c.Set("db", wrap)
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -44,24 +57,4 @@ func setupRouter() *gin.Engine {
 	r.PUT("/config", putConfigV1)
 
 	return r
-}
-
-func db() *gorm.DB {
-	db, err := gorm.Open("mysql", "root@tcp(db:3306)/anon_solicitor?charset=utf8&parseTime=True&loc=Local")
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-
-	migrate(db)
-
-	db.LogMode(true)
-	return db
-}
-
-func migrate(db *gorm.DB) {
-	db.AutoMigrate(&User{})
-	db.AutoMigrate(&Event{})
-	db.AutoMigrate(&Feedback{})
-	db.AutoMigrate(&Questions{})
 }

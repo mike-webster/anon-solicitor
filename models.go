@@ -1,103 +1,55 @@
 package main
 
 import (
-	"log"
-	"os"
+	"fmt"
 	"time"
 
-	"github.com/jinzhu/gorm"
+	"github.com/jmoiron/sqlx"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // DBWrapper is a wrapper around the gorm database
 type DBWrapper struct {
-	db *gorm.DB
+	db *sqlx.DB
 }
 
 // Get will return the open connection if there is one and it
 // will try to restablish it if the connection has been closed.
-func (w *DBWrapper) Get() *gorm.DB {
-	connection := os.Getenv("DB_USER") +
-		":" +
-		os.Getenv("DB_PASS") +
-		"@tcp(" +
-		os.Getenv("DB_HOST") +
-		":" +
-		os.Getenv("DB_PORT") +
-		")/anon_solicitor?charset=utf8&parseTime=True&loc=Local"
-	if w.db == nil {
-		db, err := gorm.Open("mysql", connection)
-		if err != nil {
-			log.Printf("db error: %v", err)
-			return nil
-		}
+func (w *DBWrapper) Get() *sqlx.DB {
+	if w.db != nil {
+		fmt.Println("DBWrapper#GET - db found")
+		err := w.db.Ping()
 
-		w.db = db
+		if err != nil {
+			fmt.Println("DBWrapper#GET - db error 1: ", err)
+			return w.db
+		}
 	}
 
-	err := w.db.DB().Ping()
+	// exactly the same as the built-in
+	db, err := sqlx.Open("mysql", "root@tcp(db:3306)/anon_solicitor?charset=utf8&parseTime=True&loc=Local")
 	if err != nil {
-		log.Printf("DBWrapper.Get Error: %v", err)
-
-		db, err := gorm.Open("mysql", connection)
-		if err != nil {
-			log.Printf("db last ditch error: %v", err)
-			return nil
-		}
-
-		w.db = db
+		fmt.Println("DBWrapper#GET - db error 2: ", err)
 	}
 
-	w.db.LogMode(true)
-	return w.db
-}
+	// force a connection and test that it worked
+	err = db.Ping()
+	if err != nil {
+		fmt.Println("DBWrapper#GET - db ping: ", err)
+		return nil
+	}
 
-// User represents an application user.
-type User struct {
-	ID        uint `gorm:"primary_key"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt *time.Time
-	Name      string
-	Email     string
-}
+	w.db = db
 
-// Feedback represents a user's opinion on an event.
-type Feedback struct {
-	ID        uint `gorm:"primary_key"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt *time.Time
-	Content   string
-}
-
-// Event represents a situation about which a user would like anonymous feedback.
-type Event struct {
-	ID                 uint `gorm:"primary_key"`
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
-	DeletedAt          *time.Time
-	Name               string      `json:"name" binding:"required,max=100"`
-	Description        string      `json:"description" binding:"required,max=1000"`
-	Time               time.Time   `json:"scheduled_time" binding:"required"`
-	OrganizingUser     User        `binding:"-"`
-	OrganizerQuestions []Questions `binding:"-"`
-	Feedback           []Feedback  `binding:"-"`
+	return db
 }
 
 // EventPutParams represents the information about an Event that a user can update.
 type EventPutParams struct {
 	ID          int64     `json:"id" binding:"required"`
-	Name        string    `json:"name"`
+	Title       string    `json:"title"`
 	Description string    `json:"description" binding:"max=1000"`
 	Time        time.Time `json:"scheduled_time"`
 	OrganizerID int64
-}
-
-type Questions struct {
-	ID        uint `gorm:"primary_key"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt *time.Time
-	Content   string
-	Answers   string
 }
