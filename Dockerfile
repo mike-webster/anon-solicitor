@@ -9,7 +9,7 @@ ENV GO111MODULE=on
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN GOOS=linux go build
+RUN GOOS=linux go build -o anon-solicitor ./cmd/app
 
 # For Web
 EXPOSE 3001
