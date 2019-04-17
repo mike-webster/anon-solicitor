@@ -15,3 +15,25 @@ type Event struct {
 	OrganizerQuestions []Question
 	Feedback           []Feedback
 }
+
+type EventService interface {
+	GetEvent(id int64) *Event
+	CreateEvent(event *Event) error
+	UpdateEvent(event *Event) error
+}
+
+// EventPostParams represents the information about an Event that a user can create.
+type EventPostParams struct {
+	Title       string    `json:"title"`
+	Description string    `json:"description" binding:"max=1000"`
+	Time        time.Time `json:"scheduled_time"`
+}
+
+// EventPutParams represents the information about an Event that a user can update.
+type EventPutParams struct {
+	ID          int64     `json:"id" binding:"required"`
+	Title       string    `json:"title"`
+	Description string    `json:"description" binding:"max=1000"`
+	Time        time.Time `json:"scheduled_time"`
+	OrganizerID int64
+}
