@@ -34,8 +34,9 @@ func main() {
 	defer db.Close()
 
 	es := data.EventService{DB: db}
+	fs := data.FeedbackService{DB: db}
 
-	controllers.StartServer(ctx, es)
+	controllers.StartServer(ctx, es, fs)
 }
 
 func moveFlagsToContext() context.Context {
