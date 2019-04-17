@@ -16,8 +16,6 @@ func setupRouter(ctx context.Context) *gin.Engine {
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
 
-	//r.Use(mwAttachDB)
-
 	r.GET("/", getHomeV1)
 	r.GET("/events", getEventsV1)
 	r.POST("/events", postEventsV1)
@@ -25,6 +23,11 @@ func setupRouter(ctx context.Context) *gin.Engine {
 	r.POST("/events/:id/feedback", postFeedbackV1)
 	r.GET("/config", getConfigV1)
 	r.PUT("/config", putConfigV1)
+
+	// TODO: Catch all 404s
+	// r.NoRoute(func(c *gin.Context) {
+	// 	c.JSON(http.StatusOK, gin.H{"test": "test"})
+	// })
 
 	return r
 }
