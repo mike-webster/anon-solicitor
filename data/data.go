@@ -32,7 +32,7 @@ func DB() *sqlx.DB {
 	return _db
 }
 
-func CreateTables(ctx context.Context) *error {
+func CreateTables(ctx context.Context) error {
 	fmt.Println("-- Creating tables")
 	userSchema := `CREATE TABLE IF NOT EXISTS users (
 		id INT AUTO_INCREMENT, 
@@ -94,7 +94,7 @@ func CreateTables(ctx context.Context) *error {
 	return nil
 }
 
-func createTable(ctx context.Context, tableName string, tableSchema string) *error {
+func createTable(ctx context.Context, tableName string, tableSchema string) error {
 	db, err := sqlx.Open("mysql", "root@tcp(db:3306)/anon_solicitor?charset=utf8&parseTime=True&loc=Local")
 	if err != nil {
 		fmt.Println("DB - db error 2: ", err)
@@ -105,7 +105,7 @@ func createTable(ctx context.Context, tableName string, tableSchema string) *err
 
 	_, err = db.Exec(tableSchema)
 	if err != nil {
-		return &err
+		return err
 	}
 
 	return nil
