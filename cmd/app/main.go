@@ -8,6 +8,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/mike-webster/anon-solicitor/data"
+	"github.com/mike-webster/anon-solicitor/env"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/mike-webster/anon-solicitor/controllers"
@@ -16,6 +17,8 @@ import (
 func main() {
 	log.Print("Sleeping to allow db setup...")
 	time.Sleep(3 * time.Second)
+
+	var _ = env.Config()
 
 	ctx := moveFlagsToContext()
 
