@@ -16,10 +16,10 @@ import (
 const issuer = "anon-solicitor"
 
 // GetJWT will return a valid JWT containing the provided information
-func GetJWT(secret string, userID int64, isAdmin bool) string {
+func GetJWT(secret string, tok string) string {
 	header := "{\"alg\": \"HS256\", \"typ\": \"JWT\"}"
-	payload := fmt.Sprintf("{\"iss\":\"%v\",\"exp\":\"%v\",\"admin\":%v,\"userid\":%v}",
-		issuer, time.Now().UTC().Add(30*time.Minute).Unix(), isAdmin, userID)
+	payload := fmt.Sprintf("{\"iss\":\"%v\",\"exp\":\"%v\",\"tok\":\"%v\"}",
+		issuer, time.Now().UTC().Add(30*time.Minute).Unix(), tok)
 
 	h := hmac.New(sha256.New, []byte(secret))
 	s1 := base64.URLEncoding.EncodeToString([]byte(header))
@@ -32,11 +32,11 @@ func GetJWT(secret string, userID int64, isAdmin bool) string {
 }
 
 // CheckToken will take a token an attempt to validate it using the given secret
-func CheckToken(token string, secret string) error {
+func CheckToken(token string, secret string) (string, error) {
 	sections := strings.Split(token, ".")
 	if len(sections) != 3 {
 		// not correct format
-		return errors.New("Invalid Format")
+		return "", errors.New("Invalid Format")
 	}
 
 	checkString := fmt.Sprintf("%v.%v", sections[0], sections[1])
@@ -47,19 +47,19 @@ func CheckToken(token string, secret string) error {
 
 	if s3 != sections[2] {
 		// signature doesn't match - do not authorize
-		return errors.New("invalid signature")
+		return "", errors.New("invalid signature")
 	}
 
 	pMap := map[string]interface{}{}
 
 	payload, err := base64.URLEncoding.DecodeString(sections[1])
 	if err != nil {
-		return errors.New("couldn't decode payload")
+		return "", errors.New("couldn't decode payload")
 	}
 
 	err = json.Unmarshal([]byte(payload), &pMap)
 	if err != nil {
-		return errors.New("couldn't parse payload after decoding")
+		return "", errors.New("couldn't parse payload after decoding")
 	}
 
 	for k, v := range pMap {
@@ -67,16 +67,21 @@ func CheckToken(token string, secret string) error {
 		case "iss":
 			val, _ := v.(string)
 			if val != issuer {
-				return errors.New("invalid issuer")
+				return "", errors.New("invalid issuer")
 			}
 		case "exp":
 			val, _ := v.(string)
 			vall, _ := strconv.Atoi(val)
 			if time.Now().UTC().Unix() >= int64(vall) {
-				return errors.New(fmt.Sprint("expired session, ", vall))
+				return "", errors.New(fmt.Sprint("expired session, ", vall))
 			}
-		case "admin":
-			fmt.Println("admin")
+		case "tok":
+			fmt.Println("tok")
+			ret, ok := v.(string)
+			if !ok {
+				return "", errors.New("coldn't parse tok from token")
+			}
+			return ret, nil
 		case "userid":
 			fmt.Println(v)
 		default:
@@ -84,5 +89,5 @@ func CheckToken(token string, secret string) error {
 		}
 	}
 
-	return nil
+	return "", nil
 }

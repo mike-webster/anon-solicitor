@@ -8,7 +8,10 @@ import (
 
 func TestTokens(t *testing.T) {
 	secret := "testsecret"
-	jwt := GetJWT(secret, 1, false)
+	tok := "thisisatestoneusetoken"
+	jwt := GetJWT(secret, tok)
 	assert.Equal(t, true, len(jwt) > 0, jwt)
-	assert.Equal(t, nil, CheckToken(jwt, secret))
+	ret, err := CheckToken(jwt, secret)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, tok, ret)
 }
