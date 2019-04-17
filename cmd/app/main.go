@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"time"
 
@@ -13,9 +14,10 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
 	log.Print("Sleeping to allow db setup...")
 	time.Sleep(3 * time.Second)
+
+	ctx := moveFlagsToContext()
 
 	err := data.CreateTables(ctx)
 	if err != nil {
@@ -31,4 +33,15 @@ func main() {
 	es := data.EventService{DB: db}
 
 	controllers.StartServer(ctx, es)
+}
+
+func moveFlagsToContext() context.Context {
+	ctx := context.Background()
+
+	dropTables := flag.Bool("drop", false, "should we drop the existing tables")
+	flag.Parse()
+	log.Printf("-- DropTables: %v", *dropTables)
+	ctx = context.WithValue(ctx, "DropTables", *dropTables)
+
+	return ctx
 }

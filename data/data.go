@@ -61,8 +61,10 @@ func DropTables(ctx context.Context) error {
 }
 
 func CreateTables(ctx context.Context) error {
-	DropTables(ctx)
-
+	dropTables, _ := ctx.Value("DropTables").(bool)
+	if dropTables {
+		DropTables(ctx)
+	}
 	fmt.Println("-- Creating tables")
 	userSchema := `CREATE TABLE IF NOT EXISTS users (
 		id INT AUTO_INCREMENT, 

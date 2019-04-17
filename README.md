@@ -22,3 +22,6 @@ Provide a platform to faciliate soliciting public, anonymous feedback from a gro
 - **POST** `/events/:id/feedback`
 - **GET** `/config`
 - **PUT** `/config`
+
+## Flags
+- `drop={bool}` will specify if you want to drop the tables when the app starts; defaults to false.
