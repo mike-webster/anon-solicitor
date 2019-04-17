@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"fmt"
+	"log"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -32,7 +33,36 @@ func DB() *sqlx.DB {
 	return _db
 }
 
+func DropTables(ctx context.Context) error {
+	log.Println("-- Deleting tables")
+	queries := []string{
+		"DROP TABLE IF EXISTS feedback;",
+		"DROP TABLE IF EXISTS events;",
+		"DROP TABLE IF EXISTS questions;",
+		"DROP TABLE IF EXISTS users;",
+	}
+
+	db, err := sqlx.Open("mysql", "root@tcp(db:3306)/anon_solicitor?charset=utf8&parseTime=True&loc=Local")
+	if err != nil {
+		fmt.Println("DB - db error 2: ", err)
+
+		return nil
+	}
+	defer db.Close()
+
+	for _, q := range queries {
+		_, err = db.Exec(q)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func CreateTables(ctx context.Context) error {
+	DropTables(ctx)
+
 	fmt.Println("-- Creating tables")
 	userSchema := `CREATE TABLE IF NOT EXISTS users (
 		id INT AUTO_INCREMENT, 
@@ -53,7 +83,7 @@ func CreateTables(ctx context.Context) error {
 		description NVARCHAR(5000),
 		time DATETIME NOT NULL,
 		created_at DATETIME NOT NULL,
-		modified_at DATETIME,
+		updated_at DATETIME,
 		deleted_at DATETIME,
 		user_id INT NOT NULL,
 		PRIMARY KEY (id)
@@ -76,13 +106,13 @@ func CreateTables(ctx context.Context) error {
 	}
 
 	// questions
-	questionSchema := `CREATE TABLE IF NOT EXISTS question (
+	questionSchema := `CREATE TABLE IF NOT EXISTS questions (
 		id INT AUTO_INCREMENT,
 		event_id INT NOT NULL,
 		content NVARCHAR(5000) NOT NULL,
 		answers NVARCHAR(5000) NOT NULL,
 		created_at DATETIME NOT NULL,
-		modified_at DATETIME,
+		updated_at DATETIME,
 		deleted_at DATETIME,
 		PRIMARY KEY (id)
 	);`
