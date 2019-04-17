@@ -17,14 +17,15 @@ func (c ContextKey) String() string {
 }
 
 var eventServiceKey ContextKey = "EventService"
+var feedbackServiceKey ContextKey = "FeedbackService"
 var testKey ContextKey = "test"
 
-func StartServer(ctx context.Context, es anon.EventService) {
-	r := setupRouter(ctx, es)
+func StartServer(ctx context.Context, es anon.EventService, fs anon.FeedbackService) {
+	r := setupRouter(ctx, es, fs)
 	r.Run("0.0.0.0:3001")
 }
 
-func setupRouter(ctx context.Context, es anon.EventService) *gin.Engine {
+func setupRouter(ctx context.Context, es anon.EventService, fs anon.FeedbackService) *gin.Engine {
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
 
@@ -118,6 +119,19 @@ func postEventsV1(c *gin.Context) {
 	}
 
 	es, ok := untypedES.(anon.EventService)
+	if !ok {
+		c.HTML(http.StatusInternalServerError, "error.html", gin.H{"msg": "couldnt cast db"})
+
+		return
+	}
+
+	untypedFS := c.Value(feedbackServiceKey.String())
+	if untypedFS == nil {
+		c.HTML(500, "error.html", gin.H{"msg": "missing db in context"})
+		return
+	}
+
+	fs, ok := untypedFS.(anon.FeedbackService)
 	if !ok {
 		c.HTML(http.StatusInternalServerError, "error.html", gin.H{"msg": "couldnt cast db"})
 

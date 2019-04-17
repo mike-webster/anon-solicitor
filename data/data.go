@@ -85,6 +85,7 @@ func CreateTables(ctx context.Context) error {
 	feedbackSchema := `CREATE TABLE IF NOT EXISTS feedback (
 		id INT AUTO_INCREMENT,
 		content NVARCHAR(5000) NOT NULL,
+		tok NVARCHAR(5000) NOT NULL,
 		event_id INT NOT NULL,
 		PRIMARY KEY(id)
 	);`

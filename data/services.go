@@ -88,3 +88,27 @@ func (es EventService) GetEvents() (*[]anon.Event, error) {
 
 	return &ret, nil
 }
+
+type FeedbackService struct {
+	DB *sqlx.DB
+}
+
+func (fs FeedbackService) CreateFeedback(feedback *anon.Feedback) error {
+	if feedback == nil {
+		return errors.New("must pass event in order to create")
+	}
+
+	res, err := fs.DB.Exec("INSERT INTO feedback (content, tok, event_id) VALUES (?,?,?)",
+		feedback.Content, feedback.Tok, feedback.EventID)
+	if err != nil {
+		return err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	feedback.ID = id
+	return nil
+}
