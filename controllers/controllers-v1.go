@@ -57,28 +57,27 @@ func getHomeV1(c *gin.Context) {
 }
 
 func getEventsV1(c *gin.Context) {
-	es := c.Value(eventServiceKey.String())
-	if es == nil {
+	untypedES := c.Value(eventServiceKey.String())
+	if untypedES == nil {
 		c.HTML(500, "error.html", gin.H{"msg": "missing db in context"})
 		return
 	}
-	c.HTML(200, "error.html", gin.H{"msg": "found service"})
-	return
-	// db, ok := contextDB.(DBWrapper)
-	// if !ok {
-	// 	c.HTML(500, "error.html", gin.H{"msg": "db conversion error"})
-	// 	return
-	// }
 
-	// events := []Event{}
-	// err := db.Get().Select(&events, "SELECT * FROM events")
-	// if err != nil {
-	// 	c.HTML(500, "error.html", gin.H{"msg": "db query error"})
-	// 	return
-	// }
+	es, ok := untypedES.(anon.EventService)
+	if !ok {
+		c.HTML(http.StatusInternalServerError, "error.html", gin.H{"msg": "couldnt cast db"})
 
-	//c.HTML(http.StatusOK, "events.html", gin.H{"events": events})
-	c.HTML(http.StatusNotImplemented, "error.html", gin.H{"msg": "...coming soon..."})
+		return
+	}
+
+	events, err := es.GetEvents()
+	if err != nil {
+		c.HTML(http.StatusInternalServerError, "error.html", gin.H{"msg": "db query error", "err": err})
+
+		return
+	}
+
+	c.HTML(http.StatusOK, "events.html", gin.H{"events": events})
 }
 
 func postEventsV1(c *gin.Context) {

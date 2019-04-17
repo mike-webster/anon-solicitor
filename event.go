@@ -18,6 +18,7 @@ type Event struct {
 
 type EventService interface {
 	GetEvent(id int64) *Event
+	GetEvents() (*[]Event, error)
 	CreateEvent(event *Event) error
 	UpdateEvent(event *Event) error
 }

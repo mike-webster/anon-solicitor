@@ -77,3 +77,14 @@ func (es EventService) GetEvent(id int64) *anon.Event {
 
 	return nil
 }
+
+func (es EventService) GetEvents() (*[]anon.Event, error) {
+	var ret []anon.Event
+
+	err := es.DB.Select(&ret, "SELECT * FROM events")
+	if err != nil {
+		return nil, err
+	}
+
+	return &ret, nil
+}
