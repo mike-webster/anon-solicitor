@@ -5,13 +5,13 @@ import "time"
 // Event represents a situation about which a user would like anonymous feedback.
 type Event struct {
 	ID                 int64
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
-	DeletedAt          time.Time
-	Title              string    `json:"title" binding:"required,max=100"`
-	Description        string    `json:"description" binding:"required,max=1000"`
-	Time               time.Time `json:"scheduled_time" binding:"required"`
-	UserID             int64
+	Title              string     `json:"title" binding:"required,max=200"`
+	Description        string     `json:"description" binding:"required,max=5000"`
+	Time               time.Time  `json:"scheduled_time" binding:"required"`
+	CreatedAt          time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at" db:"updated_at"`
+	DeletedAt          *time.Time `json:"deleted_at" db:"deleted_at"`
+	UserID             int64      `json:"user_id" db:"user_id"`
 	OrganizerQuestions []Question
 	Feedback           []Feedback
 }
