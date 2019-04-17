@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strconv"
 
 	gin "github.com/gin-gonic/gin"
 	anon "github.com/mike-webster/anon-solicitor"
@@ -31,6 +32,7 @@ func setupRouter(ctx context.Context, es anon.EventService) *gin.Engine {
 
 	r.GET("/", getHomeV1)
 	r.GET("/events", getEventsV1)
+	r.GET("/events/:id", getEventV1)
 	r.POST("/events", postEventsV1)
 	r.POST("/events/:id/feedback", postFeedbackV1)
 
@@ -75,6 +77,37 @@ func getEventsV1(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "events.html", gin.H{"events": events})
+}
+
+func getEventV1(c *gin.Context) {
+	untypedES := c.Value(eventServiceKey.String())
+	if untypedES == nil {
+		c.HTML(500, "error.html", gin.H{"msg": "missing db in context"})
+		return
+	}
+
+	es, ok := untypedES.(anon.EventService)
+	if !ok {
+		c.HTML(http.StatusInternalServerError, "error.html", gin.H{"msg": "couldnt cast db"})
+
+		return
+	}
+
+	eventid, _ := strconv.Atoi(c.Param("id"))
+	if eventid < 1 {
+		c.HTML(http.StatusBadRequest, "error.html", gin.H{"msg": "invalid event id"})
+
+		return
+	}
+
+	event := es.GetEvent(int64(eventid))
+	if event == nil {
+		c.HTML(http.StatusNotFound, "error.html", gin.H{"msg": "event not found"})
+
+		return
+	}
+
+	c.HTML(http.StatusOK, "events.html", gin.H{"events": []anon.Event{*event}})
 }
 
 func postEventsV1(c *gin.Context) {
