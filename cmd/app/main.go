@@ -31,24 +31,4 @@ func main() {
 	es := data.EventService{DB: db}
 
 	controllers.StartServer(ctx, es)
-
-	// wrap := main.DBWrapper{}
-	// wrap.Get()
-
-	// ctx = context.WithValue(ctx, "db", wrap)
-
 }
-
-// func mwAttachDB(c *gin.Context) {
-// 	wrap := DBWrapper{}
-// 	wrap.Get()
-// 	c.Set("db", wrap)
-
-// 	defer func() {
-// 		if r := recover(); r != nil {
-// 			log.Println("Middleware caught a panic", r)
-// 		}
-// 	}()
-
-// 	c.Next()
-// }
