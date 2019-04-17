@@ -39,7 +39,6 @@ func DropTables(ctx context.Context) error {
 		"DROP TABLE IF EXISTS feedback;",
 		"DROP TABLE IF EXISTS events;",
 		"DROP TABLE IF EXISTS questions;",
-		"DROP TABLE IF EXISTS users;",
 	}
 
 	db, err := sqlx.Open("mysql", "root@tcp(db:3306)/anon_solicitor?charset=utf8&parseTime=True&loc=Local")
@@ -66,18 +65,6 @@ func CreateTables(ctx context.Context) error {
 		DropTables(ctx)
 	}
 	fmt.Println("-- Creating tables")
-	userSchema := `CREATE TABLE IF NOT EXISTS users (
-		id INT AUTO_INCREMENT, 
-		name NVARCHAR(100) NOT NULL, 
-		email NVARCHAR(200) NOT NULL, 
-		active BOOLEAN NOT NULL, 
-		created_at DATETIME NOT NULL, 
-		PRIMARY KEY (id)
-	);`
-	err := createTable(ctx, "users", userSchema)
-	if err != nil {
-		return err
-	}
 
 	eventSchema := `CREATE TABLE IF NOT EXISTS events (
 		id INT AUTO_INCREMENT,
@@ -87,10 +74,9 @@ func CreateTables(ctx context.Context) error {
 		created_at DATETIME NOT NULL,
 		updated_at DATETIME,
 		deleted_at DATETIME,
-		user_id INT NOT NULL,
 		PRIMARY KEY (id)
 	);`
-	err = createTable(ctx, "events", eventSchema)
+	err := createTable(ctx, "events", eventSchema)
 	if err != nil {
 		return err
 	}
