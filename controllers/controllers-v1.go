@@ -33,8 +33,6 @@ func setupRouter(ctx context.Context, es anon.EventService) *gin.Engine {
 	r.GET("/events", getEventsV1)
 	r.POST("/events", postEventsV1)
 	r.POST("/events/:id/feedback", postFeedbackV1)
-	r.GET("/config", getConfigV1)
-	r.PUT("/config", putConfigV1)
 
 	// TODO: Catch all 404s
 	// r.NoRoute(func(c *gin.Context) {
