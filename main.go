@@ -21,7 +21,7 @@ func main() {
 	ctx = context.WithValue(ctx, "db", wrap)
 	err := data.CreateTables(ctx)
 	if err != nil {
-		panic(*err)
+		panic(err)
 	}
 
 	r := setupRouter()

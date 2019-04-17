@@ -1,4 +1,4 @@
-package models
+package main
 
 // Feedback represents a user's opinion on an event.
 type Feedback struct {

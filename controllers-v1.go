@@ -6,7 +6,6 @@ import (
 	"time"
 
 	gin "github.com/gin-gonic/gin"
-	"github.com/mike-webster/anon-solicitor/models"
 )
 
 func getHomeV1(c *gin.Context) {
@@ -26,7 +25,7 @@ func getEventsV1(c *gin.Context) {
 		return
 	}
 
-	events := []models.Event{}
+	events := []Event{}
 	err := db.Get().Select(&events, "SELECT * FROM events")
 	if err != nil {
 		c.HTML(500, "error.html", gin.H{"msg": "db query error"})
@@ -49,7 +48,7 @@ func postEventsV1(c *gin.Context) {
 		return
 	}
 
-	newEvent := models.Event{}
+	newEvent := Event{}
 	err := c.Bind(&newEvent)
 	if err != nil {
 		log.Printf("Error binding object: %v", err)
