@@ -8,6 +8,7 @@ import (
 
 	gin "github.com/gin-gonic/gin"
 	anon "github.com/mike-webster/anon-solicitor"
+	"github.com/mike-webster/anon-solicitor/env"
 )
 
 type ContextKey string
@@ -21,8 +22,9 @@ var feedbackServiceKey ContextKey = "FeedbackService"
 var testKey ContextKey = "test"
 
 func StartServer(ctx context.Context, es anon.EventService, fs anon.FeedbackService) {
+	cfg := env.Config()
 	r := setupRouter(ctx, es, fs)
-	r.Run("0.0.0.0:3001")
+	r.Run(fmt.Sprintf("%v:%v", cfg.Host, cfg.Port))
 }
 
 func setupRouter(ctx context.Context, es anon.EventService, fs anon.FeedbackService) *gin.Engine {
