@@ -19,7 +19,6 @@ type EventService interface {
 	GetEvent(id int64) *Event
 	GetEvents() (*[]Event, error)
 	CreateEvent(event *Event) error
-	UpdateEvent(event *Event) error
 }
 
 // EventPostParams represents the information about an Event that a user can create.
