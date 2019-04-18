@@ -11,7 +11,6 @@ type Event struct {
 	CreatedAt          time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt          time.Time  `json:"updated_at" db:"updated_at"`
 	DeletedAt          *time.Time `json:"deleted_at" db:"deleted_at"`
-	UserID             int64      `json:"user_id" db:"user_id"`
 	OrganizerQuestions []Question
 	Feedback           []Feedback
 }

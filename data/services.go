@@ -22,11 +22,10 @@ func (es EventService) CreateEvent(event *anon.Event) error {
 	event.CreatedAt = createdAt
 	event.UpdatedAt = createdAt
 
-	res, err := es.DB.Exec("INSERT INTO events (title, description, time, user_id, created_at, updated_at) VALUES (?,?,?,?,?,?)",
+	res, err := es.DB.Exec("INSERT INTO events (title, description, time, created_at, updated_at) VALUES (?,?,?,?,?)",
 		event.Title,
 		event.Description,
 		event.Time,
-		event.UserID,
 		event.CreatedAt,
 		event.UpdatedAt,
 	)
@@ -45,10 +44,6 @@ func (es EventService) CreateEvent(event *anon.Event) error {
 
 	log.Printf("-- assigning event id: %v", event.ID)
 
-	return nil
-}
-
-func (es EventService) UpdateEvent(event *anon.Event) error {
 	return nil
 }
 
