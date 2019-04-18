@@ -9,5 +9,6 @@ type Feedback struct {
 }
 
 type FeedbackService interface {
-	CreateFeedback(feedback *Feedback) error
+	CreateFeedback(*Feedback) error
+	GetFeedbackByTok(string) (*Feedback, error)
 }

@@ -2,6 +2,7 @@ package data
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -106,4 +107,23 @@ func (fs FeedbackService) CreateFeedback(feedback *anon.Feedback) error {
 
 	feedback.ID = id
 	return nil
+}
+
+func (fs FeedbackService) GetFeedbackByTok(tok string) (*anon.Feedback, error) {
+	if len(tok) < 1 {
+		return nil, errors.New("please provide a token")
+	}
+
+	var ret []anon.Feedback
+
+	err := fs.DB.Select(&ret, "SELECT * FROM feedback where tok = '?'", tok)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(ret) < 1 {
+		return nil, fmt.Errorf("no record found for tok: %v", tok)
+	}
+
+	return &ret[0], nil
 }
