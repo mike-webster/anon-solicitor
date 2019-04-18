@@ -12,6 +12,7 @@ import (
 	"github.com/gofrs/uuid"
 	anon "github.com/mike-webster/anon-solicitor"
 	"github.com/mike-webster/anon-solicitor/env"
+	"github.com/mike-webster/anon-solicitor/tokens"
 	gomail "gopkg.in/gomail.v2"
 )
 
@@ -43,6 +44,8 @@ func setupRouter(ctx context.Context, es anon.EventService, fs anon.FeedbackServ
 	r.GET("/events/:id", getEventV1)
 	r.POST("/events", postEventsV1)
 
+	r.Use(getToken())
+
 	r.GET("/events/:id/feedback/:token", getFeedbackV1)
 	r.POST("/events/:id/feedback/:token", postFeedbackV1)
 	r.POST("/events/:id/feedback/:token/absent", absentFeedbackV1)
@@ -59,6 +62,36 @@ func setDependencies(es anon.EventService, fs anon.FeedbackService) gin.HandlerF
 	return func(c *gin.Context) {
 		c.Set(eventServiceKey.String(), es)
 		c.Set(feedbackServiceKey.String(), fs)
+		c.Next()
+	}
+}
+
+func getToken() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Note: this is probably unncessary if the token is going to be a url param...
+		//       I just wanted to do it. :)
+		cfg := env.Config()
+		token := c.Param("token")
+		if len(token) < 1 {
+			c.AbortWithStatus(http.StatusUnauthorized)
+
+			return
+		}
+
+		tok, err := tokens.CheckToken(token, cfg.Secret)
+		if err != nil {
+			c.AbortWithError(http.StatusUnauthorized, err)
+
+			return
+		}
+
+		if len(tok) < 1 {
+			c.AbortWithError(http.StatusUnauthorized, errors.New("couldn't find token"))
+
+			return
+		}
+
+		c.Set("tok", tok)
 		c.Next()
 	}
 }
@@ -176,7 +209,6 @@ func postEventsV1(c *gin.Context) {
 		Title:       postEvent.Title,
 		Description: postEvent.Description,
 		Time:        postEvent.Time,
-		UserID:      1,
 	}
 
 	log.Printf("saving event: %v", newEvent)
