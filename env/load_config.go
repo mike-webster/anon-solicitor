@@ -21,6 +21,7 @@ type Environment struct {
 	SMTPPort         int    `yaml:"smtp_port"`
 	Host             string `yaml:"host"`
 	Port             int    `yaml:"port"`
+	Secret           string `envconfig:"ANON_SOLICITOR_SECRET"`
 }
 
 func Target() string {
