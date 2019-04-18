@@ -2,13 +2,17 @@ package controllers
 
 import (
 	"context"
+	"crypto/tls"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 
 	gin "github.com/gin-gonic/gin"
+	"github.com/gofrs/uuid"
 	anon "github.com/mike-webster/anon-solicitor"
 	"github.com/mike-webster/anon-solicitor/env"
+	gomail "gopkg.in/gomail.v2"
 )
 
 type ContextKey string
@@ -177,17 +181,87 @@ func postEventsV1(c *gin.Context) {
 		return
 	}
 
+	emails := map[string]string{}
+
+	for _, email := range postEvent.Audience {
+		// create feedback record for each audience member
+		// - attach tok to each one
+		tok, err := uuid.NewV4()
+		if err != nil {
+			c.HTML(http.StatusInternalServerError,
+				"error.html",
+				gin.H{"msg": "problem creating tokens", "id": newEvent.ID})
+
+			return
+		}
+
+		emails[tok.String()] = email
+
+		newFeedback := anon.Feedback{
+			Tok:     tok.String(),
+			EventID: posted.ID,
+		}
+
+		// clear the tok when the feedback is submitted
+		err = fs.CreateFeedback(&newFeedback)
+		if err != nil {
+			c.HTML(http.StatusInternalServerError,
+				"error.html",
+				gin.H{
+					"msg": fmt.Sprintf("problem creating tokens, Err: %v", err),
+					"id":  newEvent.ID,
+				})
+
+			return
+		}
+	}
+
+	// send email to each audience member
+	for k, v := range emails {
+		err = sendEmail(v, k, posted.Title, posted.ID)
+		if err != nil {
+			log.Printf("Error: %v", err)
+
+			c.HTML(http.StatusInternalServerError, "error.html", gin.H{"msg": fmt.Sprintf("Error: %v", err)})
+			return
+		}
+	}
+
+	// probably redirect to the actual event page - which should show any submitted feedback
+	// as well as how many total audiencemembers there were for the event
+
 	c.HTML(http.StatusOK, "event.html", gin.H{"title": "Anon Solicitor | Event", "event": posted})
+}
 
-	// if err != nil {
-	// 	c.HTML(http.StatusBadRequest, "error.html", gin.H{"msg": err})
-	// }
+func sendEmail(email string, tok string, eventName string, eventID int64) error {
+	cfg := env.Config()
+	client := gomail.NewPlainDialer(cfg.SMTPHost, cfg.SMTPPort, "", "")
+	client.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+	message := gomail.NewMessage()
+	message.SetHeader("From", "anno-solicitor@wyzant.com")
+	message.SetHeader("To", email)
 
-	// id, _ := res.LastInsertId()
-	// newEvent.ID = id
+	fbPath := fmt.Sprintf("http://%v/events/%v/feedback/%v", cfg.Host, eventID, tok)
+	body := fmt.Sprintf("<html><body><h3>Hey! We'd like to hear what you think!</h3><p>No worries - it's totally anonymous! Click <a href='%v'>here</a> to submit your feedback and see what everyone else thought!</p><p>Click <a href='%v'>here</a> to let us know that you didn't attend.</p><p>Thanks so much!</p></body></html>", fbPath, fbPath+"/absent")
 
-	//c.HTML(http.StatusOK, "event.html", gin.H{"title": "Anon Solicitor | Event", "event": newEvent})
-	//c.HTML(http.StatusNotImplemented, "error.html", gin.H{"msg": "...coming soon..."})
+	message.SetHeader("Title", fmt.Sprintf("You've been invited to give anonymous feedback about: %v", eventName))
+	message.SetBody("text/html", body)
+
+	if err := client.DialAndSend(message); err != nil {
+		log.Printf("failed to send email. Error: %v", err)
+
+		return err
+	}
+
+	return nil
+}
+
+func absentFeedbackV1(c *gin.Context) {
+
+}
+
+func getFeedbackV1(c *gin.Context) {
+
 }
 
 func postFeedbackV1(c *gin.Context) {
