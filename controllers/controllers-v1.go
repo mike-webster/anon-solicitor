@@ -31,7 +31,7 @@ func setupRouter(ctx context.Context, es anon.EventService, fs anon.FeedbackServ
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
 
-	r.Use(setDependencies(es))
+	r.Use(setDependencies(es, fs))
 
 	r.GET("/", getHomeV1)
 	r.GET("/events", getEventsV1)
@@ -47,9 +47,10 @@ func setupRouter(ctx context.Context, es anon.EventService, fs anon.FeedbackServ
 	return r
 }
 
-func setDependencies(es anon.EventService) gin.HandlerFunc {
+func setDependencies(es anon.EventService, fs anon.FeedbackService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Set(eventServiceKey.String(), es)
+		c.Set(feedbackServiceKey.String(), fs)
 		c.Next()
 	}
 }
