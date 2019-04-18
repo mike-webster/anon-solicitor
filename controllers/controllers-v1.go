@@ -336,3 +336,49 @@ func getConfigV1(c *gin.Context) {
 func putConfigV1(c *gin.Context) {
 	c.HTML(http.StatusNotImplemented, "error.html", gin.H{"msg": "...coming soon..."})
 }
+
+func getDependencies(ctx context.Context, events bool, feedback bool) (anon.EventService, anon.FeedbackService, error) {
+	var eRet anon.EventService
+	var fRet anon.FeedbackService
+	errs := ""
+	if events {
+		untypedES := ctx.Value(eventServiceKey.String())
+		if untypedES == nil {
+			errs += "missing Events DB;"
+		} else {
+			e, ok := untypedES.(anon.EventService)
+			if !ok {
+				errs += "couldnt parse events service;"
+			}
+			eRet = e
+		}
+	}
+
+	if feedback {
+		untypedFS := ctx.Value(feedbackServiceKey.String())
+		if untypedFS == nil {
+			errs += "missng Feeback DB;"
+		} else {
+			f, ok := untypedFS.(anon.FeedbackService)
+			if !ok {
+				errs += "couldnt parse Feedback service;"
+			}
+			fRet = f
+		}
+	}
+
+	if len(errs) > 1 {
+		return nil, nil, errors.New(errs)
+	}
+
+	return eRet, fRet, nil
+}
+
+func getStringFromContext(ctx context.Context, key interface{}) string {
+	ut := ctx.Value(key)
+	ret, ok := ut.(string)
+	if !ok {
+		return ""
+	}
+	return ret
+}
