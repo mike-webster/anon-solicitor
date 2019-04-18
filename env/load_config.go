@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/kelseyhightower/envconfig"
 	yaml "gopkg.in/yaml.v1"
@@ -22,6 +23,27 @@ type Environment struct {
 	Host             string `yaml:"host"`
 	Port             int    `yaml:"port"`
 	Secret           string `envconfig:"ANON_SOLICITOR_SECRET"`
+	AppName          string `envconfig:"APP_NAME"`
+}
+
+func (e *Environment) ToString() string {
+	ret := "-- [LOADED CONFIG]\n\t"
+	ret += "~ Connection String: %v\n\t"
+	ret += "~ Secret: %v\n\t"
+	ret += "~ SMTPHost: %v\n\t"
+	ret += "~ SMTPPort: %v\n\t"
+	ret += "~ Host: %v\n\t"
+	ret += "~ Port: %v\n\t"
+	ret += "~ AppName: %v\n\t"
+
+	return fmt.Sprintf(ret,
+		e.ConnectionString,
+		e.Secret,
+		e.SMTPHost,
+		e.SMTPPort,
+		e.Host,
+		e.Port,
+		e.AppName)
 }
 
 func Target() string {
@@ -34,9 +56,8 @@ func Config() *Environment {
 	if curEnv == nil {
 		setTarget()
 		curEnv = loadAppConfig()
+		log.Printf(curEnv.ToString())
 	}
-
-	log.Printf("-- [LOADED CONFIG]\n\t~ SMTPHost: %v\n\t~ SMTPPort: %v\n\t~ Port: %v", curEnv.SMTPHost, curEnv.SMTPPort, curEnv.Port)
 
 	return curEnv
 }
