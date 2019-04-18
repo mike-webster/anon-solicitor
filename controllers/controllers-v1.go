@@ -19,6 +19,7 @@ type ContextKey string
 
 func (c ContextKey) String() string {
 	return string(c)
+
 }
 
 var eventServiceKey ContextKey = "EventService"
@@ -41,7 +42,10 @@ func setupRouter(ctx context.Context, es anon.EventService, fs anon.FeedbackServ
 	r.GET("/events", getEventsV1)
 	r.GET("/events/:id", getEventV1)
 	r.POST("/events", postEventsV1)
-	r.POST("/events/:id/feedback", postFeedbackV1)
+
+	r.GET("/events/:id/feedback/:token", getFeedbackV1)
+	r.POST("/events/:id/feedback/:token", postFeedbackV1)
+	r.POST("/events/:id/feedback/:token/absent", absentFeedbackV1)
 
 	// TODO: Catch all 404s
 	// r.NoRoute(func(c *gin.Context) {
@@ -121,26 +125,36 @@ func getEventV1(c *gin.Context) {
 func postEventsV1(c *gin.Context) {
 	untypedES := c.Value(eventServiceKey.String())
 	if untypedES == nil {
-		c.HTML(500, "error.html", gin.H{"msg": "missing db in context"})
+		c.HTML(http.StatusInternalServerError,
+			"error.html",
+			gin.H{"msg": "missing db in context"})
+
 		return
 	}
 
 	es, ok := untypedES.(anon.EventService)
 	if !ok {
-		c.HTML(http.StatusInternalServerError, "error.html", gin.H{"msg": "couldnt cast db"})
+		c.HTML(http.StatusInternalServerError,
+			"error.html",
+			gin.H{"msg": "couldnt cast db"})
 
 		return
 	}
 
 	untypedFS := c.Value(feedbackServiceKey.String())
 	if untypedFS == nil {
-		c.HTML(500, "error.html", gin.H{"msg": "missing db in context"})
+		c.HTML(500,
+			"error.html",
+			gin.H{"msg": "missing db in context 2"})
+
 		return
 	}
 
 	fs, ok := untypedFS.(anon.FeedbackService)
 	if !ok {
-		c.HTML(http.StatusInternalServerError, "error.html", gin.H{"msg": "couldnt cast db"})
+		c.HTML(http.StatusInternalServerError,
+			"error.html",
+			gin.H{"msg": "couldnt cast db"})
 
 		return
 	}
@@ -149,7 +163,9 @@ func postEventsV1(c *gin.Context) {
 	err := c.Bind(&postEvent)
 	if err != nil {
 		log.Printf("Error binding object: %v", err)
-		c.HTML(http.StatusBadRequest, "error.html", gin.H{"msg": err})
+		c.HTML(http.StatusBadRequest,
+			"error.html",
+			gin.H{"msg": err})
 
 		return
 	}
