@@ -87,6 +87,7 @@ func CreateTables(ctx context.Context) error {
 		content NVARCHAR(5000) NOT NULL,
 		tok NVARCHAR(5000) NOT NULL,
 		event_id INT NOT NULL,
+		absent BOOLEAN NOT NULL DEFAULT FALSE,
 		PRIMARY KEY(id)
 	);`
 	err = createTable(ctx, "feedback", feedbackSchema)

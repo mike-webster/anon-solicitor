@@ -306,7 +306,42 @@ func sendEmail(email string, tok string, eventName string, eventID int64) error 
 }
 
 func absentFeedbackV1(c *gin.Context) {
+	_, fs, err := getDependencies(c, false, true)
+	if err != nil {
+		c.HTML(http.StatusInternalServerError,
+			"error.html",
+			gin.H{"msg": err})
 
+		return
+	}
+
+	tok := getStringFromContext(c, "tok")
+	if len(tok) < 1 {
+		c.AbortWithStatus(http.StatusNotFound)
+
+		return
+	}
+
+	fb, err := fs.GetFeedbackByTok(tok)
+	if err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+
+		return
+	}
+
+	err = fs.MarkFeebackAbsent(fb)
+	if err != nil {
+		c.HTML(http.StatusInternalServerError,
+			"error.html",
+			gin.H{"msg": err})
+
+		return
+	}
+
+	// TODO: update this to show a thanks for letting us know message
+	c.HTML(http.StatusOK,
+		"feedback.html",
+		gin.H{"feedback": *fb})
 }
 
 func getFeedbackV1(c *gin.Context) {

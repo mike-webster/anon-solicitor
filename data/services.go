@@ -127,3 +127,21 @@ func (fs FeedbackService) GetFeedbackByTok(tok string) (*anon.Feedback, error) {
 
 	return &ret[0], nil
 }
+
+func (fs FeedbackService) MarkFeedbackAbsent(f *anon.Feedback) error {
+	if f == nil {
+		return errors.New("please provide a record to mark as absent")
+	}
+
+	res, err := fs.DB.Exec("UPDATE feedback SET tok = '', absent=1 WHERE id = ?", f.ID)
+	if err != nil {
+		return err
+	}
+
+	num, _ := res.RowsAffected()
+	if num != 1 {
+		return fmt.Errorf("Unexpected number of results updated.... %v", num)
+	}
+
+	return nil
+}
