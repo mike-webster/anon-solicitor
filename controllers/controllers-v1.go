@@ -157,44 +157,17 @@ func getEventV1(c *gin.Context) {
 }
 
 func postEventsV1(c *gin.Context) {
-	untypedES := c.Value(eventServiceKey.String())
-	if untypedES == nil {
+	es, fs, err := getDependencies(c, true, true)
+	if err != nil {
 		c.HTML(http.StatusInternalServerError,
 			"error.html",
-			gin.H{"msg": "missing db in context"})
-
-		return
-	}
-
-	es, ok := untypedES.(anon.EventService)
-	if !ok {
-		c.HTML(http.StatusInternalServerError,
-			"error.html",
-			gin.H{"msg": "couldnt cast db"})
-
-		return
-	}
-
-	untypedFS := c.Value(feedbackServiceKey.String())
-	if untypedFS == nil {
-		c.HTML(500,
-			"error.html",
-			gin.H{"msg": "missing db in context 2"})
-
-		return
-	}
-
-	fs, ok := untypedFS.(anon.FeedbackService)
-	if !ok {
-		c.HTML(http.StatusInternalServerError,
-			"error.html",
-			gin.H{"msg": "couldnt cast db"})
+			gin.H{"msg": err})
 
 		return
 	}
 
 	postEvent := anon.EventPostParams{}
-	err := c.Bind(&postEvent)
+	err = c.Bind(&postEvent)
 	if err != nil {
 		log.Printf("Error binding object: %v", err)
 		c.HTML(http.StatusBadRequest,
@@ -265,6 +238,7 @@ func postEventsV1(c *gin.Context) {
 		}
 	}
 
+	// TODO: test this part
 	// send email to each audience member
 	for k, v := range emails {
 		err = sendEmail(v, k, posted.Title, posted.ID)
