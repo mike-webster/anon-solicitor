@@ -72,14 +72,27 @@ func setTarget() {
 }
 
 func loadAppConfig() *Environment {
-	fp, err := filepath.Abs(path)
-	if err != nil {
-		panic(err)
+	// So.. this is my shitty work around so we can
+	// call env.Config() from test files in other packages
+	// and still load the config correctly.
+	var fp string
+	wd, _ := os.Getwd()
+	appName := os.Getenv("APP_NAME")
+	if strings.HasSuffix(wd, appName) {
+		tp, err := filepath.Abs(path)
+		if err != nil {
+			panic(err)
+		}
+		fp = tp
+	} else {
+		cut := strings.LastIndex(wd, "/")
+		fp = wd[:cut+1] + path
 	}
 
-	f, err := ioutil.ReadFile(fp)
+	f, err := ioutil.ReadFile("" + fp)
 	if err != nil {
-		panic(err)
+		log.Print(err)
+		return nil
 	}
 
 	var envs map[string]Environment
