@@ -56,3 +56,31 @@ func String(ctx *gin.Context, key interface{}) (string, error) {
 
 	return s, nil
 }
+
+// GetEventService retrieves the expected EventService with the give key from the gin context
+func GetEventService(ctx *gin.Context, key interface{}) (*EventService, error) {
+	if ctx == nil {
+		return nil, errors.New("provide a gin context in order to retrieve a value")
+	}
+
+	es, ok := ctx.Value(key).(*EventService)
+	if !ok {
+		return nil, errors.New("couldnt parse Event Service from context")
+	}
+
+	return es, nil
+}
+
+// Feedback retrieves the expected EventService with the give key from the gin context
+func GetFeedbackService(ctx *gin.Context, key interface{}) (*FeedbackService, error) {
+	if ctx == nil {
+		return nil, errors.New("provide a gin context in order to retrieve a value")
+	}
+
+	fs, ok := ctx.Value(key).(*FeedbackService)
+	if !ok {
+		return nil, errors.New("couldnt parse Feedback Service from context")
+	}
+
+	return fs, nil
+}

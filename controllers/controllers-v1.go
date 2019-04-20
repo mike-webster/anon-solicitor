@@ -80,8 +80,8 @@ func setDependencies(ctx context.Context) gin.HandlerFunc {
 
 		es := data.EventService{DB: db}
 		fs := data.FeedbackService{DB: db}
-		c.Set(eventServiceKey.String(), es)
-		c.Set(feedbackServiceKey.String(), fs)
+		c.Set(eventServiceKey.String(), &es)
+		c.Set(feedbackServiceKey.String(), &fs)
 		c.Next()
 	}
 }
@@ -117,37 +117,25 @@ func getToken() gin.HandlerFunc {
 	}
 }
 
-func getDependencies(ctx context.Context) (anon.EventService, anon.FeedbackService, error) {
-	var eRet anon.EventService
-	var fRet anon.FeedbackService
+func getDependencies(ctx *gin.Context) (anon.EventService, anon.FeedbackService, error) {
+
 	errs := ""
-	untypedES := ctx.Value(eventServiceKey.String())
-	if untypedES == nil {
-		errs += "missing Events DB;"
-	} else {
-		e, ok := untypedES.(anon.EventService)
-		if !ok {
-			errs += "couldnt parse events service;"
-		}
-		eRet = e
+
+	es, err := anon.GetEventService(ctx, eventServiceKey.String())
+	if err != nil {
+		errs += err.Error() + ";"
 	}
 
-	untypedFS := ctx.Value(feedbackServiceKey.String())
-	if untypedFS == nil {
-		errs += "missng Feeback DB;"
-	} else {
-		f, ok := untypedFS.(anon.FeedbackService)
-		if !ok {
-			errs += "couldnt parse Feedback service;"
-		}
-		fRet = f
+	fs, err := anon.GetFeedbackService(ctx, feedbackServiceKey.String())
+	if err != nil {
+		errs += err.Error() + ";"
 	}
 
 	if len(errs) > 1 {
 		return nil, nil, errors.New(errs)
 	}
 
-	return eRet, fRet, nil
+	return *es, *fs, nil
 }
 
 func sendEmail(email string, tok string, eventName string, eventID int64) error {
@@ -178,15 +166,9 @@ func getHomeV1(c *gin.Context) {
 }
 
 func getEventsV1(c *gin.Context) {
-	untypedES := c.Value(eventServiceKey.String())
-	if untypedES == nil {
-		c.HTML(500, "error.html", gin.H{"msg": "missing db in context"})
-		return
-	}
-
-	es, ok := untypedES.(anon.EventService)
-	if !ok {
-		c.HTML(http.StatusInternalServerError, "error.html", gin.H{"msg": "couldnt cast db"})
+	es, _, err := getDependencies(c)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
 
 		return
 	}
@@ -202,15 +184,9 @@ func getEventsV1(c *gin.Context) {
 }
 
 func getEventV1(c *gin.Context) {
-	untypedES := c.Value(eventServiceKey.String())
-	if untypedES == nil {
-		c.HTML(500, "error.html", gin.H{"msg": "missing db in context"})
-		return
-	}
-
-	es, ok := untypedES.(anon.EventService)
-	if !ok {
-		c.HTML(http.StatusInternalServerError, "error.html", gin.H{"msg": "couldnt cast db"})
+	es, _, err := getDependencies(c)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
 
 		return
 	}
