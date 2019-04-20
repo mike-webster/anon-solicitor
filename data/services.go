@@ -14,7 +14,7 @@ type EventService struct {
 	DB *sqlx.DB
 }
 
-func (es EventService) CreateEvent(event *anon.Event) error {
+func (es *EventService) CreateEvent(event *anon.Event) error {
 	if event == nil {
 		return errors.New("must pass event in order to create")
 	}
@@ -48,7 +48,7 @@ func (es EventService) CreateEvent(event *anon.Event) error {
 	return nil
 }
 
-func (es EventService) GetEvent(id int64) *anon.Event {
+func (es *EventService) GetEvent(id int64) *anon.Event {
 	if id < 1 {
 		log.Print("id less than 1")
 		return nil
@@ -74,7 +74,7 @@ func (es EventService) GetEvent(id int64) *anon.Event {
 	return nil
 }
 
-func (es EventService) GetEvents() (*[]anon.Event, error) {
+func (es *EventService) GetEvents() (*[]anon.Event, error) {
 	var ret []anon.Event
 
 	err := es.DB.Select(&ret, "SELECT * FROM events")
@@ -89,7 +89,7 @@ type FeedbackService struct {
 	DB *sqlx.DB
 }
 
-func (fs FeedbackService) CreateFeedback(feedback *anon.Feedback) error {
+func (fs *FeedbackService) CreateFeedback(feedback *anon.Feedback) error {
 	if feedback == nil {
 		return errors.New("must pass event in order to create")
 	}
@@ -109,7 +109,7 @@ func (fs FeedbackService) CreateFeedback(feedback *anon.Feedback) error {
 	return nil
 }
 
-func (fs FeedbackService) GetFeedbackByTok(tok string) (*anon.Feedback, error) {
+func (fs *FeedbackService) GetFeedbackByTok(tok string) (*anon.Feedback, error) {
 	if len(tok) < 1 {
 		return nil, errors.New("please provide a token")
 	}
