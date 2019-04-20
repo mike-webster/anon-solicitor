@@ -89,7 +89,7 @@ type FeedbackService struct {
 	DB *sqlx.DB
 }
 
-func (fs *FeedbackService) CreateFeedback(feedback *anon.Feedback) error {
+func (fs FeedbackService) CreateFeedback(feedback *anon.Feedback) error {
 	if feedback == nil {
 		return errors.New("must pass event in order to create")
 	}
@@ -109,7 +109,7 @@ func (fs *FeedbackService) CreateFeedback(feedback *anon.Feedback) error {
 	return nil
 }
 
-func (fs *FeedbackService) GetFeedbackByTok(tok string) (*anon.Feedback, error) {
+func (fs FeedbackService) GetFeedbackByTok(tok string) (*anon.Feedback, error) {
 	if len(tok) < 1 {
 		return nil, errors.New("please provide a token")
 	}

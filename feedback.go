@@ -11,5 +11,5 @@ type Feedback struct {
 type FeedbackService interface {
 	CreateFeedback(*Feedback) error
 	GetFeedbackByTok(string) (*Feedback, error)
-	MarkFeebackAbsent(*Feedback) error
+	MarkFeedbackAbsent(*Feedback) error
 }

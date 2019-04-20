@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"reflect"
 	"strconv"
 
 	"github.com/mike-webster/anon-solicitor/data"
@@ -27,18 +28,7 @@ var testKey anon.ContextKey = "test"
 func StartServer(ctx context.Context) {
 	cfg := env.Config()
 
-	db, err := sqlx.Open("mysql", cfg.ConnectionString)
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-
 	r := setupRouter(ctx)
-
-	err = data.CreateTables(ctx, db)
-	if err != nil {
-		panic(err)
-	}
 
 	r.Run(fmt.Sprintf("%v:%v", cfg.Host, cfg.Port))
 }
@@ -70,17 +60,23 @@ func setupRouter(ctx context.Context) *gin.Engine {
 
 func setDependencies(ctx context.Context) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		db, err := anon.DB(c)
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
+		cfg := env.Config()
 
-			return
+		db, err := sqlx.Open("mysql", cfg.ConnectionString)
+		if err != nil {
+			panic(err)
+		}
+
+		defer db.Close()
+		err = data.CreateTables(ctx, db)
+		if err != nil {
+			panic(err)
 		}
 
 		es := data.EventService{DB: db}
 		fs := data.FeedbackService{DB: db}
-		c.Set(eventServiceKey.String(), &es)
-		c.Set(feedbackServiceKey.String(), &fs)
+		c.Set(eventServiceKey.String(), es)
+		c.Set(feedbackServiceKey.String(), fs)
 		c.Next()
 	}
 }
@@ -120,12 +116,12 @@ func getDependencies(ctx *gin.Context) (anon.EventService, anon.FeedbackService,
 
 	errs := ""
 
-	es, err := anon.GetEventService(ctx, eventServiceKey.String())
+	es, err := getEventService(ctx, eventServiceKey.String())
 	if err != nil {
 		errs += err.Error() + ";"
 	}
 
-	fs, err := anon.GetFeedbackService(ctx, feedbackServiceKey.String())
+	fs, err := getFeedbackService(ctx, feedbackServiceKey.String())
 	if err != nil {
 		errs += err.Error() + ";"
 	}
@@ -134,7 +130,7 @@ func getDependencies(ctx *gin.Context) (anon.EventService, anon.FeedbackService,
 		return nil, nil, errors.New(errs)
 	}
 
-	return *es, *fs, nil
+	return es, fs, nil
 }
 
 func sendEmail(email string, tok string, eventName string, eventID int64) error {
@@ -337,7 +333,7 @@ func absentFeedbackV1(c *gin.Context) {
 		return
 	}
 
-	err = fs.MarkFeebackAbsent(fb)
+	err = fs.MarkFeedbackAbsent(fb)
 	if err != nil {
 		c.HTML(http.StatusInternalServerError,
 			"error.html",
@@ -402,4 +398,38 @@ func getFeedbackV1(c *gin.Context) {
 func postFeedbackV1(c *gin.Context) {
 	// TODO: Implement
 	c.HTML(http.StatusNotImplemented, "error.html", gin.H{"msg": "...coming soon..."})
+}
+
+// getEventService retrieves the expected EventService with the give key from the gin context
+func getEventService(ctx *gin.Context, key interface{}) (anon.EventService, error) {
+	if ctx == nil {
+		return nil, errors.New("provide a gin context in order to retrieve a value")
+	}
+
+	utEs := ctx.Value(key)
+	if utEs == nil {
+		return nil, errors.New("couldnt find key for Event Service in context")
+	}
+
+	es, ok := utEs.(data.EventService)
+	if !ok {
+		return nil, fmt.Errorf("couldnt parse Event Service from context, found: %v", reflect.TypeOf(utEs))
+	}
+
+	return &es, nil
+}
+
+// Feedback retrieves the expected EventService with the give key from the gin context
+func getFeedbackService(ctx *gin.Context, key interface{}) (anon.FeedbackService, error) {
+
+	if ctx == nil {
+		return nil, errors.New("provide a gin context in order to retrieve a value")
+	}
+
+	fs, ok := ctx.Value(key).(data.FeedbackService)
+	if !ok {
+		return nil, errors.New("couldnt parse Feedback Service from context")
+	}
+
+	return fs, nil
 }
