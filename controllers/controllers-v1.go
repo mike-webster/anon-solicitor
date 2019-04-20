@@ -20,16 +20,9 @@ import (
 	gomail "gopkg.in/gomail.v2"
 )
 
-type ContextKey string
-
-func (c ContextKey) String() string {
-	return string(c)
-
-}
-
-var eventServiceKey ContextKey = "EventService"
-var feedbackServiceKey ContextKey = "FeedbackService"
-var testKey ContextKey = "test"
+var eventServiceKey anon.ContextKey = "EventService"
+var feedbackServiceKey anon.ContextKey = "FeedbackService"
+var testKey anon.ContextKey = "test"
 
 func StartServer(ctx context.Context) {
 	cfg := env.Config()
@@ -90,6 +83,7 @@ func getToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Note: this is probably unncessary if the token is going to be a url param...
 		//       I just wanted to do it. :)
+		// TODO: test this
 		cfg := env.Config()
 		token := c.Param("token")
 		if len(token) < 1 {

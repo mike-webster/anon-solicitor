@@ -8,6 +8,12 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type ContextKey string
+
+func (c ContextKey) String() string {
+	return string(c)
+}
+
 func DB(ctx *gin.Context) (*sqlx.DB, error) {
 	if ctx == nil {
 		return nil, errors.New("provide a gin context in order to retrieve the database")
