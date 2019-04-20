@@ -24,6 +24,7 @@ type Environment struct {
 	Port             int    `yaml:"port"`
 	Secret           string `envconfig:"ANON_SOLICITOR_SECRET"`
 	AppName          string `envconfig:"APP_NAME"`
+	ShouldSendEmails bool   `envconfig:"SEND_EMAILS"`
 }
 
 func (e *Environment) ToString() string {

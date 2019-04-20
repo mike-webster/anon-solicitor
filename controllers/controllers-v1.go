@@ -255,50 +255,53 @@ func postEventsV1(c *gin.Context) {
 		return
 	}
 
-	emails := map[string]string{}
+	if env.Config().ShouldSendEmails {
 
-	for _, email := range postEvent.Audience {
-		// create feedback record for each audience member
-		// - attach tok to each one
-		tok, err := uuid.NewV4()
-		if err != nil {
-			c.HTML(http.StatusInternalServerError,
-				"error.html",
-				gin.H{"msg": "problem creating tokens", "id": newEvent.ID})
+		emails := map[string]string{}
 
-			return
+		for _, email := range postEvent.Audience {
+			// create feedback record for each audience member
+			// - attach tok to each one
+			tok, err := uuid.NewV4()
+			if err != nil {
+				c.HTML(http.StatusInternalServerError,
+					"error.html",
+					gin.H{"msg": "problem creating tokens", "id": newEvent.ID})
+
+				return
+			}
+
+			emails[tok.String()] = email
+
+			newFeedback := anon.Feedback{
+				Tok:     tok.String(),
+				EventID: posted.ID,
+			}
+
+			// clear the tok when the feedback is submitted
+			err = fs.CreateFeedback(&newFeedback)
+			if err != nil {
+				c.HTML(http.StatusInternalServerError,
+					"error.html",
+					gin.H{
+						"msg": fmt.Sprintf("problem creating tokens, Err: %v", err),
+						"id":  newEvent.ID,
+					})
+
+				return
+			}
 		}
 
-		emails[tok.String()] = email
+		// TODO: test this part
+		// send email to each audience member
+		for k, v := range emails {
+			err = sendEmail(v, k, posted.Title, posted.ID)
+			if err != nil {
+				log.Printf("Error: %v", err)
 
-		newFeedback := anon.Feedback{
-			Tok:     tok.String(),
-			EventID: posted.ID,
-		}
-
-		// clear the tok when the feedback is submitted
-		err = fs.CreateFeedback(&newFeedback)
-		if err != nil {
-			c.HTML(http.StatusInternalServerError,
-				"error.html",
-				gin.H{
-					"msg": fmt.Sprintf("problem creating tokens, Err: %v", err),
-					"id":  newEvent.ID,
-				})
-
-			return
-		}
-	}
-
-	// TODO: test this part
-	// send email to each audience member
-	for k, v := range emails {
-		err = sendEmail(v, k, posted.Title, posted.ID)
-		if err != nil {
-			log.Printf("Error: %v", err)
-
-			c.HTML(http.StatusInternalServerError, "error.html", gin.H{"msg": fmt.Sprintf("Error: %v", err)})
-			return
+				c.HTML(http.StatusInternalServerError, "error.html", gin.H{"msg": fmt.Sprintf("Error: %v", err)})
+				return
+			}
 		}
 	}
 
@@ -352,21 +355,10 @@ func absentFeedbackV1(c *gin.Context) {
 }
 
 func getFeedbackV1(c *gin.Context) {
-
+	// TODO: Implement
 }
 
 func postFeedbackV1(c *gin.Context) {
-	// contextDB := c.Value("db")
-	// if contextDB == nil {
-	// 	c.HTML(500, "error.html", gin.H{"msg": "missing db in context"})
-	// 	return
-	// }
-
-	// db, ok := contextDB.(DBWrapper)
-	// if !ok {
-	// 	c.HTML(500, "error.html", gin.H{"msg": "db conversion error"})
-	// 	return
-	// }
-
+	// TODO: Implement
 	c.HTML(http.StatusNotImplemented, "error.html", gin.H{"msg": "...coming soon..."})
 }
