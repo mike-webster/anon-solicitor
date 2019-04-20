@@ -9,8 +9,11 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/mike-webster/anon-solicitor/data"
+
 	gin "github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid"
+	"github.com/jmoiron/sqlx"
 	anon "github.com/mike-webster/anon-solicitor"
 	"github.com/mike-webster/anon-solicitor/env"
 	"github.com/mike-webster/anon-solicitor/tokens"
@@ -28,17 +31,24 @@ var eventServiceKey ContextKey = "EventService"
 var feedbackServiceKey ContextKey = "FeedbackService"
 var testKey ContextKey = "test"
 
-func StartServer(ctx context.Context, es anon.EventService, fs anon.FeedbackService) {
+func StartServer(ctx context.Context) {
 	cfg := env.Config()
-	r := setupRouter(ctx, es, fs)
+
+	db, err := sqlx.Open("mysql", cfg.ConnectionString)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	r := setupRouter(ctx)
 	r.Run(fmt.Sprintf("%v:%v", cfg.Host, cfg.Port))
 }
 
-func setupRouter(ctx context.Context, es anon.EventService, fs anon.FeedbackService) *gin.Engine {
+func setupRouter(ctx context.Context) *gin.Engine {
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
 
-	r.Use(setDependencies(es, fs))
+	r.Use(setDependencies(ctx))
 
 	r.GET("/", getHomeV1)
 	r.GET("/events", getEventsV1)
@@ -59,8 +69,17 @@ func setupRouter(ctx context.Context, es anon.EventService, fs anon.FeedbackServ
 	return r
 }
 
-func setDependencies(es anon.EventService, fs anon.FeedbackService) gin.HandlerFunc {
+func setDependencies(ctx context.Context) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		db, err := anon.DB(c)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+
+			return
+		}
+
+		es := data.EventService{DB: db}
+		fs := data.FeedbackService{DB: db}
 		c.Set(eventServiceKey.String(), es)
 		c.Set(feedbackServiceKey.String(), fs)
 		c.Next()
