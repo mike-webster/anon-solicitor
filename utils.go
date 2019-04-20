@@ -8,12 +8,14 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// ContextKey is meant to be used with contexts
 type ContextKey string
 
 func (c ContextKey) String() string {
 	return string(c)
 }
 
+// DB retrieves the sqlx DB from the gin context
 func DB(ctx *gin.Context) (*sqlx.DB, error) {
 	if ctx == nil {
 		return nil, errors.New("provide a gin context in order to retrieve the database")
@@ -27,6 +29,7 @@ func DB(ctx *gin.Context) (*sqlx.DB, error) {
 	return db, nil
 }
 
+// Bool retrieves the expected bool value with the given key from the gin context
 func Bool(ctx *gin.Context, key interface{}) (*bool, error) {
 	if ctx == nil {
 		return nil, errors.New("provide a gin context in order to retrieve a value")
@@ -40,6 +43,7 @@ func Bool(ctx *gin.Context, key interface{}) (*bool, error) {
 	return &b, nil
 }
 
+// String retrieves the expected string value with the given key from the gin context
 func String(ctx *gin.Context, key interface{}) (string, error) {
 	if ctx == nil {
 		return "", errors.New("provide a gin context in order to retrieve a value")

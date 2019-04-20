@@ -24,6 +24,7 @@ var eventServiceKey anon.ContextKey = "EventService"
 var feedbackServiceKey anon.ContextKey = "FeedbackService"
 var testKey anon.ContextKey = "test"
 
+// StartServer will attempt to run the gin server
 func StartServer(ctx context.Context) {
 	cfg := env.Config()
 
@@ -108,6 +109,66 @@ func getToken() gin.HandlerFunc {
 		c.Set("tok", tok)
 		c.Next()
 	}
+}
+
+func getDependencies(ctx context.Context, events bool, feedback bool) (anon.EventService, anon.FeedbackService, error) {
+	var eRet anon.EventService
+	var fRet anon.FeedbackService
+	errs := ""
+	if events {
+		untypedES := ctx.Value(eventServiceKey.String())
+		if untypedES == nil {
+			errs += "missing Events DB;"
+		} else {
+			e, ok := untypedES.(anon.EventService)
+			if !ok {
+				errs += "couldnt parse events service;"
+			}
+			eRet = e
+		}
+	}
+
+	if feedback {
+		untypedFS := ctx.Value(feedbackServiceKey.String())
+		if untypedFS == nil {
+			errs += "missng Feeback DB;"
+		} else {
+			f, ok := untypedFS.(anon.FeedbackService)
+			if !ok {
+				errs += "couldnt parse Feedback service;"
+			}
+			fRet = f
+		}
+	}
+
+	if len(errs) > 1 {
+		return nil, nil, errors.New(errs)
+	}
+
+	return eRet, fRet, nil
+}
+
+func sendEmail(email string, tok string, eventName string, eventID int64) error {
+	cfg := env.Config()
+	client := gomail.NewPlainDialer(cfg.SMTPHost, cfg.SMTPPort, "", "")
+	client.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+	message := gomail.NewMessage()
+	message.SetHeader("From", "anno-solicitor@wyzant.com")
+	message.SetHeader("To", email)
+	jwt := tokens.GetJWT(cfg.Secret, tok)
+	fbPath := fmt.Sprintf("http://%v/events/%v/feedback/%v", cfg.Host, eventID, jwt)
+	body := fmt.Sprintf("<html><body><h3>Hey! We'd like to hear what you think!</h3><p>No worries - it's totally anonymous! Click <a href='%v'>here</a> to submit your feedback and see what everyone else thought!</p><p>Click <a href='%v'>here</a> to let us know that you didn't attend.</p><p>Thanks so much!</p></body></html>", fbPath, fbPath+"/absent")
+
+	message.SetHeader("Title", fmt.Sprintf("You've been invited to give anonymous feedback about: %v", eventName))
+	message.SetBody("text/html", body)
+
+	if err := client.DialAndSend(message); err != nil {
+		log.Printf("failed to send email. Error: %v", err)
+
+		return err
+	}
+
+	return nil
 }
 
 func getHomeV1(c *gin.Context) {
@@ -269,29 +330,6 @@ func postEventsV1(c *gin.Context) {
 	c.HTML(http.StatusOK, "event.html", gin.H{"title": "Anon Solicitor | Event", "event": posted})
 }
 
-func sendEmail(email string, tok string, eventName string, eventID int64) error {
-	cfg := env.Config()
-	client := gomail.NewPlainDialer(cfg.SMTPHost, cfg.SMTPPort, "", "")
-	client.TLSConfig = &tls.Config{InsecureSkipVerify: true}
-	message := gomail.NewMessage()
-	message.SetHeader("From", "anno-solicitor@wyzant.com")
-	message.SetHeader("To", email)
-	jwt := tokens.GetJWT(cfg.Secret, tok)
-	fbPath := fmt.Sprintf("http://%v/events/%v/feedback/%v", cfg.Host, eventID, jwt)
-	body := fmt.Sprintf("<html><body><h3>Hey! We'd like to hear what you think!</h3><p>No worries - it's totally anonymous! Click <a href='%v'>here</a> to submit your feedback and see what everyone else thought!</p><p>Click <a href='%v'>here</a> to let us know that you didn't attend.</p><p>Thanks so much!</p></body></html>", fbPath, fbPath+"/absent")
-
-	message.SetHeader("Title", fmt.Sprintf("You've been invited to give anonymous feedback about: %v", eventName))
-	message.SetBody("text/html", body)
-
-	if err := client.DialAndSend(message); err != nil {
-		log.Printf("failed to send email. Error: %v", err)
-
-		return err
-	}
-
-	return nil
-}
-
 func absentFeedbackV1(c *gin.Context) {
 	_, fs, err := getDependencies(c, false, true)
 	if err != nil {
@@ -302,8 +340,12 @@ func absentFeedbackV1(c *gin.Context) {
 		return
 	}
 
-	tok := getStringFromContext(c, "tok")
-	if len(tok) < 1 {
+	tok, err := anon.String(c, "tok")
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+
+		return
+	} else if len(tok) < 1 {
 		c.AbortWithStatus(http.StatusNotFound)
 
 		return
@@ -349,58 +391,4 @@ func postFeedbackV1(c *gin.Context) {
 	// }
 
 	c.HTML(http.StatusNotImplemented, "error.html", gin.H{"msg": "...coming soon..."})
-}
-
-func getConfigV1(c *gin.Context) {
-	c.HTML(http.StatusNotImplemented, "error.html", gin.H{"msg": "...coming soon..."})
-}
-
-func putConfigV1(c *gin.Context) {
-	c.HTML(http.StatusNotImplemented, "error.html", gin.H{"msg": "...coming soon..."})
-}
-
-func getDependencies(ctx context.Context, events bool, feedback bool) (anon.EventService, anon.FeedbackService, error) {
-	var eRet anon.EventService
-	var fRet anon.FeedbackService
-	errs := ""
-	if events {
-		untypedES := ctx.Value(eventServiceKey.String())
-		if untypedES == nil {
-			errs += "missing Events DB;"
-		} else {
-			e, ok := untypedES.(anon.EventService)
-			if !ok {
-				errs += "couldnt parse events service;"
-			}
-			eRet = e
-		}
-	}
-
-	if feedback {
-		untypedFS := ctx.Value(feedbackServiceKey.String())
-		if untypedFS == nil {
-			errs += "missng Feeback DB;"
-		} else {
-			f, ok := untypedFS.(anon.FeedbackService)
-			if !ok {
-				errs += "couldnt parse Feedback service;"
-			}
-			fRet = f
-		}
-	}
-
-	if len(errs) > 1 {
-		return nil, nil, errors.New(errs)
-	}
-
-	return eRet, fRet, nil
-}
-
-func getStringFromContext(ctx context.Context, key interface{}) string {
-	ut := ctx.Value(key)
-	ret, ok := ut.(string)
-	if !ok {
-		return ""
-	}
-	return ret
 }
