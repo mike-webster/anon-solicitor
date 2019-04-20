@@ -111,34 +111,30 @@ func getToken() gin.HandlerFunc {
 	}
 }
 
-func getDependencies(ctx context.Context, events bool, feedback bool) (anon.EventService, anon.FeedbackService, error) {
+func getDependencies(ctx context.Context) (anon.EventService, anon.FeedbackService, error) {
 	var eRet anon.EventService
 	var fRet anon.FeedbackService
 	errs := ""
-	if events {
-		untypedES := ctx.Value(eventServiceKey.String())
-		if untypedES == nil {
-			errs += "missing Events DB;"
-		} else {
-			e, ok := untypedES.(anon.EventService)
-			if !ok {
-				errs += "couldnt parse events service;"
-			}
-			eRet = e
+	untypedES := ctx.Value(eventServiceKey.String())
+	if untypedES == nil {
+		errs += "missing Events DB;"
+	} else {
+		e, ok := untypedES.(anon.EventService)
+		if !ok {
+			errs += "couldnt parse events service;"
 		}
+		eRet = e
 	}
 
-	if feedback {
-		untypedFS := ctx.Value(feedbackServiceKey.String())
-		if untypedFS == nil {
-			errs += "missng Feeback DB;"
-		} else {
-			f, ok := untypedFS.(anon.FeedbackService)
-			if !ok {
-				errs += "couldnt parse Feedback service;"
-			}
-			fRet = f
+	untypedFS := ctx.Value(feedbackServiceKey.String())
+	if untypedFS == nil {
+		errs += "missng Feeback DB;"
+	} else {
+		f, ok := untypedFS.(anon.FeedbackService)
+		if !ok {
+			errs += "couldnt parse Feedback service;"
 		}
+		fRet = f
 	}
 
 	if len(errs) > 1 {
@@ -231,7 +227,7 @@ func getEventV1(c *gin.Context) {
 }
 
 func postEventsV1(c *gin.Context) {
-	es, fs, err := getDependencies(c, true, true)
+	es, fs, err := getDependencies(c)
 	if err != nil {
 		c.HTML(http.StatusInternalServerError,
 			"error.html",
@@ -331,7 +327,7 @@ func postEventsV1(c *gin.Context) {
 }
 
 func absentFeedbackV1(c *gin.Context) {
-	_, fs, err := getDependencies(c, false, true)
+	_, fs, err := getDependencies(c)
 	if err != nil {
 		c.HTML(http.StatusInternalServerError,
 			"error.html",
