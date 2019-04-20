@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -9,8 +10,16 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// CreateTables will create the necessary tables for the application
+// if they do not exist.
+// Note: if the context has a true value for "DropValues", this flow
+// will drop the existing tables if they exist in order to start with
+// a fresh databse.
 func CreateTables(ctx context.Context, db *sqlx.DB) error {
-	dt, _ := ctx.Value("DropTables").(bool)
+	dt, ok := ctx.Value("DropTables").(bool)
+	if !ok {
+		return errors.New("couldnt parse DropTables from context")
+	}
 	if dt {
 		dropTables(ctx)
 	}
