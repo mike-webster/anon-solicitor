@@ -35,6 +35,12 @@ func StartServer(ctx context.Context) {
 	defer db.Close()
 
 	r := setupRouter(ctx)
+
+	err = data.CreateTables(ctx, db)
+	if err != nil {
+		panic(err)
+	}
+
 	r.Run(fmt.Sprintf("%v:%v", cfg.Host, cfg.Port))
 }
 

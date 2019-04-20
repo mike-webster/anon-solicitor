@@ -59,7 +59,7 @@ func DropTables(ctx context.Context) error {
 	return nil
 }
 
-func CreateTables(ctx context.Context) error {
+func CreateTables(ctx context.Context, db *sqlx.DB) error {
 	dropTables, _ := ctx.Value("DropTables").(bool)
 	if dropTables {
 		DropTables(ctx)
@@ -76,7 +76,7 @@ func CreateTables(ctx context.Context) error {
 		deleted_at DATETIME,
 		PRIMARY KEY (id)
 	);`
-	err := createTable(ctx, "events", eventSchema)
+	err := createTable(ctx, db, "events", eventSchema)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func CreateTables(ctx context.Context) error {
 		absent BOOLEAN NOT NULL DEFAULT FALSE,
 		PRIMARY KEY(id)
 	);`
-	err = createTable(ctx, "feedback", feedbackSchema)
+	err = createTable(ctx, db, "feedback", feedbackSchema)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func CreateTables(ctx context.Context) error {
 		deleted_at DATETIME,
 		PRIMARY KEY (id)
 	);`
-	err = createTable(ctx, "questions", questionSchema)
+	err = createTable(ctx, db, "questions", questionSchema)
 	if err != nil {
 		return err
 	}
@@ -114,16 +114,8 @@ func CreateTables(ctx context.Context) error {
 	return nil
 }
 
-func createTable(ctx context.Context, tableName string, tableSchema string) error {
-	db, err := sqlx.Open("mysql", "root@tcp(db:3306)/anon_solicitor?charset=utf8&parseTime=True&loc=Local")
-	if err != nil {
-		fmt.Println("DB - db error 2: ", err)
-
-		return nil
-	}
-	defer db.Close()
-
-	_, err = db.Exec(tableSchema)
+func createTable(ctx context.Context, db *sqlx.DB, tableName string, tableSchema string) error {
+	_, err := db.Exec(tableSchema)
 	if err != nil {
 		return err
 	}

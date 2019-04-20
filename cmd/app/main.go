@@ -6,8 +6,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/mike-webster/anon-solicitor/data"
-
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/mike-webster/anon-solicitor/controllers"
 )
@@ -19,11 +17,6 @@ func main() {
 	time.Sleep(3 * time.Second)
 
 	ctx := moveFlagsToContext()
-
-	err := data.CreateTables(ctx)
-	if err != nil {
-		panic(err)
-	}
 
 	controllers.StartServer(ctx)
 }
