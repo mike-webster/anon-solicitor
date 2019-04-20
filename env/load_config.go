@@ -20,6 +20,8 @@ type Environment struct {
 	ConnectionString string `yaml:"connection_string"`
 	SMTPHost         string `yaml:"smtp_host"`
 	SMTPPort         int    `yaml:"smtp_port"`
+	SMTPUser         string `yaml:"smtp_user"`
+	SMTPPass         string `envconfig:"SMTP_PASS"`
 	Host             string `yaml:"host"`
 	Port             int    `yaml:"port"`
 	Secret           string `envconfig:"ANON_SOLICITOR_SECRET"`
