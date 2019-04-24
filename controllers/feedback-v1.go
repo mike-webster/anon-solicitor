@@ -15,36 +15,42 @@ var feedbackServiceKey anon.ContextKey = "FeedbackService"
 func postAbsentFeedbackV1(c *gin.Context) {
 	_, fs, err := getDependencies(c)
 	if err != nil {
-		c.HTML(http.StatusInternalServerError,
-			"error.html",
-			gin.H{"msg": err})
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusInternalServerError)
+		setError(c, err, ErrRetrievingDependencies)
 
 		return
 	}
 
 	tok, err := anon.String(c, "tok")
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusUnauthorized)
+		setError(c, err, ErrBadToken)
 
 		return
 	} else if len(tok) < 1 {
-		c.AbortWithStatus(http.StatusNotFound)
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusUnauthorized)
+		setError(c, err, ErrNoToken)
 
 		return
 	}
 
 	fb, err := fs.GetFeedbackByTok(tok)
 	if err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusNotFound)
+		setError(c, err, ErrRecordNotFound)
 
 		return
 	}
 
 	err = fs.MarkFeedbackAbsent(fb)
 	if err != nil {
-		c.HTML(http.StatusInternalServerError,
-			"error.html",
-			gin.H{"msg": err})
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusInternalServerError)
+		setError(c, err, ErrUpdatingRecord)
 
 		return
 	}
@@ -58,21 +64,27 @@ func postAbsentFeedbackV1(c *gin.Context) {
 func getFeedbackV1(c *gin.Context) {
 	es, fs, err := getDependencies(c)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusInternalServerError)
+		setError(c, err, ErrRetrievingDependencies)
 
 		return
 	}
 
 	tok, err := anon.String(c, "tok")
 	if err != nil {
-		c.AbortWithError(http.StatusUnauthorized, err)
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusUnauthorized)
+		setError(c, err, ErrBadToken)
 
 		return
 	}
 
 	eventid, _ := strconv.Atoi(c.Param("id"))
 	if eventid < 1 {
-		c.HTML(http.StatusBadRequest, "error.html", gin.H{"msg": "invalid event id"})
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusBadRequest)
+		setError(c, errors.New("invalid event id"), ErrValidation)
 
 		return
 	}
@@ -80,20 +92,26 @@ func getFeedbackV1(c *gin.Context) {
 	event := es.GetEvent(int64(eventid))
 
 	if event == nil {
-		c.HTML(http.StatusNotFound, "error.html", gin.H{"msg": "event not found"})
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusNotFound)
+		setError(c, errors.New("event not found"), ErrRecordNotFound)
 
 		return
 	}
 
 	fb, err := fs.GetFeedbackByTok(tok)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusNotFound)
+		setError(c, err, ErrRecordNotFound)
 
 		return
 	}
 
 	if fb == nil {
-		c.HTML(http.StatusNotFound, "error.html", gin.H{"msg": "feedback record not found"})
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusNotFound)
+		setError(c, errors.New("event not found"), ErrRecordNotFound)
 
 		return
 	}
@@ -104,7 +122,9 @@ func getFeedbackV1(c *gin.Context) {
 
 func postFeedbackV1(c *gin.Context) {
 	// TODO: Implement
-	c.HTML(http.StatusNotImplemented, "error.html", gin.H{"msg": "...coming soon..."})
+	c.Set(controllerErrorKey, true)
+	c.Set(controllerRespStatusKey, http.StatusNotImplemented)
+	setError(c, errors.New("...coming soon..."), ErrNotImplemented)
 }
 
 // Feedback retrieves the expected EventService with the give key from the gin context
