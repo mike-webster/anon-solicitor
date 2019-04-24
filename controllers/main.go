@@ -50,7 +50,7 @@ func setupRouter(ctx context.Context, db *sqlx.DB) *gin.Engine {
 	r.GET("/events/:id", getEventV1)
 	r.POST("/events", postEventsV1)
 
-	r.Use(getToken())
+	//r.Use(getToken())
 
 	r.GET("/events/:id/feedback/:token", getFeedbackV1)
 	r.POST("/events/:id/feedback/:token", postFeedbackV1)
@@ -61,49 +61,10 @@ func setupRouter(ctx context.Context, db *sqlx.DB) *gin.Engine {
 	// 	c.JSON(http.StatusOK, gin.H{"test": "test"})
 	// })
 
+	r.Use(setStatus())
+
+	r.GET("/t", testing)
 	return r
-}
-
-func setDependencies(ctx context.Context, db *sqlx.DB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-
-		es := data.EventService{DB: db}
-		fs := data.FeedbackService{DB: db}
-		c.Set(eventServiceKey.String(), es)
-		c.Set(feedbackServiceKey.String(), fs)
-		c.Next()
-	}
-}
-
-func getToken() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// Note: this is probably unncessary if the token is going to be a url param...
-		//       I just wanted to do it. :)
-		// TODO: test this
-		cfg := env.Config()
-		token := c.Param("token")
-		if len(token) < 1 {
-			c.AbortWithStatus(http.StatusUnauthorized)
-
-			return
-		}
-
-		tok, err := tokens.CheckToken(token, cfg.Secret)
-		if err != nil {
-			c.AbortWithError(http.StatusUnauthorized, err)
-
-			return
-		}
-
-		if len(tok) < 1 {
-			c.AbortWithError(http.StatusUnauthorized, errors.New("couldn't find token"))
-
-			return
-		}
-
-		c.Set("tok", tok)
-		c.Next()
-	}
 }
 
 func getDependencies(ctx *gin.Context) (anon.EventService, anon.FeedbackService, error) {
@@ -152,4 +113,13 @@ func sendEmail(email string, tok string, eventName string, eventID int64) error 
 
 func getHomeV1(c *gin.Context) {
 	c.HTML(http.StatusOK, "master.html", gin.H{"title": "Anon Solicitor"})
+}
+
+func setError(c *gin.Context, err error, desc string) {
+	c.Error(gin.Error{
+		Err:  err,
+		Meta: desc,
+	})
+
+	c.Set(controllerErrorKey, true)
 }
