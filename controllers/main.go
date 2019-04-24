@@ -17,7 +17,14 @@ import (
 	gomail "gopkg.in/gomail.v2"
 )
 
-var testKey anon.ContextKey = "test"
+var (
+	testKey anon.ContextKey = "test"
+)
+
+const (
+	controllerErrorKey      = "controllerError"
+	controllerRespStatusKey = "responseStatus"
+)
 
 // StartServer will attempt to run the gin server
 func StartServer(ctx context.Context) {
@@ -52,9 +59,11 @@ func setupRouter(ctx context.Context, db *sqlx.DB) *gin.Engine {
 
 	//r.Use(getToken())
 
+	// TODO: isolate these into a group so I can use the getToken()
+	//       middleware on only these routes.
 	r.GET("/events/:id/feedback/:token", getFeedbackV1)
 	r.POST("/events/:id/feedback/:token", postFeedbackV1)
-	r.POST("/events/:id/feedback/:token/absent", absentFeedbackV1)
+	r.POST("/events/:id/feedback/:token/absent", postAbsentFeedbackV1)
 
 	// TODO: Catch all 404s
 	// r.NoRoute(func(c *gin.Context) {

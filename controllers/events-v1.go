@@ -15,19 +15,33 @@ import (
 	"github.com/mike-webster/anon-solicitor/env"
 )
 
-var eventServiceKey anon.ContextKey = "EventService"
+var (
+	eventServiceKey anon.ContextKey = "EventService"
+)
+
+const (
+	ErrRetrievingDependencies = "error_retrieving_dependencies"
+	ErrRetrievingDomainObject = "error_retrieving_domain_object"
+	ErrValidation             = "error_validation"
+	ErrRecordNotFound         = "err_record_not_found"
+	ErrRecordCreation         = "err_record_not_created"
+	ErrTokenCreation          = "err_token_not_created"
+	ErrEmail                  = "err_sending_email"
+)
 
 func getEventsV1(c *gin.Context) {
 	es, _, err := getDependencies(c)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.Set(controllerErrorKey, true)
+		setError(c, err, ErrRetrievingDependencies)
 
 		return
 	}
 
 	events, err := es.GetEvents()
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "error.html", gin.H{"msg": "db query error", "err": err})
+		c.Set(controllerErrorKey, true)
+		setError(c, err, ErrRetrievingDomainObject)
 
 		return
 	}
@@ -38,21 +52,26 @@ func getEventsV1(c *gin.Context) {
 func getEventV1(c *gin.Context) {
 	es, _, err := getDependencies(c)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.Set(controllerErrorKey, true)
+		setError(c, err, ErrRetrievingDependencies)
 
 		return
 	}
 
 	eventid, _ := strconv.Atoi(c.Param("id"))
 	if eventid < 1 {
-		c.HTML(http.StatusBadRequest, "error.html", gin.H{"msg": "invalid event id"})
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusBadRequest)
+		setError(c, errors.New("invalid event id"), ErrValidation)
 
 		return
 	}
 
 	event := es.GetEvent(int64(eventid))
 	if event == nil {
-		c.HTML(http.StatusNotFound, "error.html", gin.H{"msg": "event not found"})
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusNotFound)
+		setError(c, errors.New("event not found"), ErrRecordNotFound)
 
 		return
 	}
@@ -63,9 +82,8 @@ func getEventV1(c *gin.Context) {
 func postEventsV1(c *gin.Context) {
 	es, fs, err := getDependencies(c)
 	if err != nil {
-		c.HTML(http.StatusInternalServerError,
-			"error.html",
-			gin.H{"msg": err})
+		c.Set(controllerErrorKey, true)
+		setError(c, err, ErrRetrievingDependencies)
 
 		return
 	}
@@ -73,10 +91,10 @@ func postEventsV1(c *gin.Context) {
 	postEvent := anon.EventPostParams{}
 	err = c.Bind(&postEvent)
 	if err != nil {
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusBadRequest)
+		setError(c, err, ErrValidation)
 		log.Printf("Error binding object: %v", err)
-		c.HTML(http.StatusBadRequest,
-			"error.html",
-			gin.H{"msg": err})
 
 		return
 	}
@@ -93,16 +111,20 @@ func postEventsV1(c *gin.Context) {
 
 	err = es.CreateEvent(&newEvent)
 	if err != nil {
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusInternalServerError)
+		setError(c, err, ErrRecordCreation)
 		log.Printf("error creating event: %v", err)
-		c.HTML(http.StatusInternalServerError, "error.html", gin.H{"msg": err})
 
 		return
 	}
 
 	posted := es.GetEvent(newEvent.ID)
 	if posted == nil {
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusInternalServerError)
+		setError(c, err, ErrRecordNotFound)
 		log.Printf("error getting created event: %v", err)
-		c.HTML(http.StatusInternalServerError, "error.html", gin.H{"msg": "couldnt retrieve saved event", "id": newEvent.ID})
 
 		return
 	}
@@ -116,9 +138,9 @@ func postEventsV1(c *gin.Context) {
 			// - attach tok to each one
 			tok, err := uuid.NewV4()
 			if err != nil {
-				c.HTML(http.StatusInternalServerError,
-					"error.html",
-					gin.H{"msg": "problem creating tokens", "id": newEvent.ID})
+				c.Set(controllerErrorKey, true)
+				c.Set(controllerRespStatusKey, http.StatusInternalServerError)
+				setError(c, err, ErrTokenCreation)
 
 				return
 			}
@@ -133,12 +155,9 @@ func postEventsV1(c *gin.Context) {
 			// clear the tok when the feedback is submitted
 			err = fs.CreateFeedback(&newFeedback)
 			if err != nil {
-				c.HTML(http.StatusInternalServerError,
-					"error.html",
-					gin.H{
-						"msg": fmt.Sprintf("problem creating tokens, Err: %v", err),
-						"id":  newEvent.ID,
-					})
+				c.Set(controllerErrorKey, true)
+				c.Set(controllerRespStatusKey, http.StatusInternalServerError)
+				setError(c, err, ErrRecordCreation)
 
 				return
 			}
@@ -149,9 +168,11 @@ func postEventsV1(c *gin.Context) {
 		for k, v := range emails {
 			err = sendEmail(v, k, posted.Title, posted.ID)
 			if err != nil {
+				c.Set(controllerErrorKey, true)
+				c.Set(controllerRespStatusKey, http.StatusInternalServerError)
+				setError(c, err, ErrEmail)
 				log.Printf("Error: %v", err)
 
-				c.HTML(http.StatusInternalServerError, "error.html", gin.H{"msg": fmt.Sprintf("Error: %v", err)})
 				return
 			}
 		}

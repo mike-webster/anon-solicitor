@@ -12,7 +12,7 @@ import (
 
 var feedbackServiceKey anon.ContextKey = "FeedbackService"
 
-func absentFeedbackV1(c *gin.Context) {
+func postAbsentFeedbackV1(c *gin.Context) {
 	_, fs, err := getDependencies(c)
 	if err != nil {
 		c.HTML(http.StatusInternalServerError,
