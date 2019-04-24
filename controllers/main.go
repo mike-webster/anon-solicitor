@@ -24,6 +24,10 @@ var (
 const (
 	controllerErrorKey      = "controllerError"
 	controllerRespStatusKey = "responseStatus"
+	ErrNoToken              = "err_missing_token"
+	ErrBadToken             = "err_invalid_token"
+	ErrUpdatingRecord       = "err_record_update"
+	ErrNotImplemented       = "err_not_implemented"
 )
 
 // StartServer will attempt to run the gin server
