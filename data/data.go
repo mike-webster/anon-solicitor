@@ -2,7 +2,6 @@ package data
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 
@@ -18,7 +17,7 @@ import (
 func CreateTables(ctx context.Context, db *sqlx.DB) error {
 	dt, ok := ctx.Value("DropTables").(bool)
 	if !ok {
-		return errors.New("couldnt parse DropTables from context")
+		dt = false
 	}
 	if dt {
 		dropTables(ctx)
