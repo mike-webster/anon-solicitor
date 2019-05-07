@@ -14,7 +14,7 @@ import (
 
 var path = "app.yaml"
 var curEnv *Environment
-var target = "development"
+var _target = "development"
 
 type Environment struct {
 	ConnectionString string `yaml:"connection_string"`
@@ -50,7 +50,7 @@ func (e *Environment) ToString() string {
 }
 
 func Target() string {
-	return target
+	return _target
 }
 
 // Config always returns the configuration settings
@@ -58,7 +58,11 @@ func Target() string {
 func Config() *Environment {
 	if curEnv == nil {
 		setTarget()
+		log.Printf("~~ Refreshing config; target: %v", _target)
 		curEnv = loadAppConfig()
+		if curEnv == nil {
+			panic("couldn't load config")
+		}
 		log.Printf(curEnv.ToString())
 	}
 
@@ -67,8 +71,10 @@ func Config() *Environment {
 
 func setTarget() {
 	target := os.Getenv("GO_ENV")
+	log.Println("setting target to : ", target)
 	switch target {
 	case "development", "production", "uat", "test":
+		_target = target
 	default:
 		panic(fmt.Errorf("Invalid target: %v", target))
 	}
@@ -81,13 +87,19 @@ func loadAppConfig() *Environment {
 	var fp string
 	wd, _ := os.Getwd()
 	appName := os.Getenv("APP_NAME")
+	log.Println("~ Working directory: ", wd, " -- appname : ", appName)
 	if strings.HasSuffix(wd, appName) {
+		// this should mean we're in the root directory
+		log.Println("~~~ in root directory")
 		tp, err := filepath.Abs(path)
 		if err != nil {
 			panic(err)
 		}
 		fp = tp
 	} else {
+		// this should mean we're requesting the config from another directory - and they
+		// wouldn't have configs in each directory
+		log.Println("~~~ not in root directory")
 		cut := strings.LastIndex(wd, "/")
 		fp = wd[:cut+1] + path
 	}
