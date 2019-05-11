@@ -10,7 +10,6 @@ import (
 
 	gin "github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid"
-	anon "github.com/mike-webster/anon-solicitor"
 	"github.com/mike-webster/anon-solicitor/data"
 	"github.com/mike-webster/anon-solicitor/env"
 	"github.com/mike-webster/anon-solicitor/tokens"

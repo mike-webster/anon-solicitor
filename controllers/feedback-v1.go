@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	gin "github.com/gin-gonic/gin"
-	anon "github.com/mike-webster/anon-solicitor"
 	"github.com/mike-webster/anon-solicitor/data"
 )
 

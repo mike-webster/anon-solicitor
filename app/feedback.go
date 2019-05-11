@@ -1,4 +1,4 @@
-package anon
+package app
 
 // Feedback represents a user's opinion on an event.
 type Feedback struct {
