@@ -13,6 +13,7 @@ import (
 	anon "github.com/mike-webster/anon-solicitor"
 	"github.com/mike-webster/anon-solicitor/data"
 	"github.com/mike-webster/anon-solicitor/env"
+	"github.com/mike-webster/anon-solicitor/tokens"
 )
 
 var (
@@ -80,6 +81,7 @@ func getEventV1(c *gin.Context) {
 }
 
 func postEventsV1(c *gin.Context) {
+	cfg := env.Config()
 	es, fs, em, err := getDependencies(c)
 	if err != nil {
 		c.Set(controllerErrorKey, true)
@@ -166,7 +168,12 @@ func postEventsV1(c *gin.Context) {
 		// TODO: test this part
 		// send email to each audience member
 		for k, v := range emails {
-			err = sendEmail(v, k, posted.Title, posted.ID)
+			fbPath := fmt.Sprintf("http://%v/events/%v/feedback/%v",
+				cfg.Host,
+				posted.ID,
+				tokens.GetJWT(cfg.Secret, k))
+
+			err = em.SendFeedbackEmail(v, fbPath)
 			if err != nil {
 				c.Set(controllerErrorKey, true)
 				c.Set(controllerRespStatusKey, http.StatusInternalServerError)
