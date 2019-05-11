@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/mike-webster/anon-solicitor/email"
+
 	gin "github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	"github.com/mike-webster/anon-solicitor/data"
@@ -16,11 +18,20 @@ import (
 
 func setDependencies(ctx context.Context, db *sqlx.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-
+		cfg := env.Config()
 		es := data.EventService{DB: db}
 		fs := data.FeedbackService{DB: db}
+		em := email.DeliveryService{
+			Host: cfg.SMTPHost,
+			Port: cfg.SMTPPort,
+			User: cfg.SMTPUser,
+			Pass: cfg.SMTPPass,
+		}
+		// TODO: Fix these context keys. It looks like I'm recreating these amongst pacakges...
+		//       Try to just move them into the ENV package as exposed constants?
 		c.Set(eventServiceKey.String(), es)
 		c.Set(feedbackServiceKey.String(), fs)
+		c.Set("EmailService", em)
 		c.Next()
 	}
 }
