@@ -7,14 +7,14 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	anon "github.com/mike-webster/anon-solicitor"
+	domain "github.com/mike-webster/anon-solicitor/app"
 )
 
 type EventService struct {
 	DB *sqlx.DB
 }
 
-func (es *EventService) CreateEvent(event *anon.Event) error {
+func (es *EventService) CreateEvent(event *domain.Event) error {
 	if event == nil {
 		return errors.New("must pass event in order to create")
 	}
@@ -48,7 +48,7 @@ func (es *EventService) CreateEvent(event *anon.Event) error {
 	return nil
 }
 
-func (es *EventService) GetEvent(id int64) *anon.Event {
+func (es *EventService) GetEvent(id int64) *domain.Event {
 	if id < 1 {
 		log.Print("id less than 1")
 		return nil
@@ -61,7 +61,7 @@ func (es *EventService) GetEvent(id int64) *anon.Event {
 	}
 
 	if rows.Next() {
-		var ret anon.Event
+		var ret domain.Event
 		err = rows.StructScan(&ret)
 		if err != nil {
 			log.Printf("struct scan error: %v", err)
@@ -74,8 +74,8 @@ func (es *EventService) GetEvent(id int64) *anon.Event {
 	return nil
 }
 
-func (es *EventService) GetEvents() (*[]anon.Event, error) {
-	var ret []anon.Event
+func (es *EventService) GetEvents() (*[]domain.Event, error) {
+	var ret []domain.Event
 
 	err := es.DB.Select(&ret, "SELECT * FROM events")
 	if err != nil {
@@ -89,7 +89,7 @@ type FeedbackService struct {
 	DB *sqlx.DB
 }
 
-func (fs FeedbackService) CreateFeedback(feedback *anon.Feedback) error {
+func (fs FeedbackService) CreateFeedback(feedback *domain.Feedback) error {
 	if feedback == nil {
 		return errors.New("must pass event in order to create")
 	}
@@ -109,12 +109,12 @@ func (fs FeedbackService) CreateFeedback(feedback *anon.Feedback) error {
 	return nil
 }
 
-func (fs FeedbackService) GetFeedbackByTok(tok string) (*anon.Feedback, error) {
+func (fs FeedbackService) GetFeedbackByTok(tok string) (*domain.Feedback, error) {
 	if len(tok) < 1 {
 		return nil, errors.New("please provide a token")
 	}
 
-	var ret []anon.Feedback
+	var ret []domain.Feedback
 
 	err := fs.DB.Select(&ret, "SELECT * FROM feedback where tok = '?'", tok)
 	if err != nil {
@@ -128,7 +128,7 @@ func (fs FeedbackService) GetFeedbackByTok(tok string) (*anon.Feedback, error) {
 	return &ret[0], nil
 }
 
-func (fs FeedbackService) MarkFeedbackAbsent(f *anon.Feedback) error {
+func (fs FeedbackService) MarkFeedbackAbsent(f *domain.Feedback) error {
 	if f == nil {
 		return errors.New("please provide a record to mark as absent")
 	}

@@ -8,31 +8,31 @@ import (
 
 	"github.com/bmizerany/assert"
 	gin "github.com/gin-gonic/gin"
-	anon "github.com/mike-webster/anon-solicitor"
+	domain "github.com/mike-webster/anon-solicitor/app"
 )
 
 type TestEventService struct {
 	ForceGetEventError    bool
 	ForceGetEventsError   bool
 	ForceCreateEventError bool
-	Event                 anon.Event
+	Event                 domain.Event
 }
 
-func (tes *TestEventService) GetEvent(ID int64) *anon.Event {
+func (tes *TestEventService) GetEvent(ID int64) *domain.Event {
 	if tes.ForceGetEventError {
 		return nil
 	}
 
 	return &tes.Event
 }
-func (tes *TestEventService) GetEvents() (*[]anon.Event, error) {
+func (tes *TestEventService) GetEvents() (*[]domain.Event, error) {
 	if tes.ForceGetEventsError {
 		return nil, errors.New("forced test error")
 	}
 
-	return &[]anon.Event{tes.Event}, nil
+	return &[]domain.Event{tes.Event}, nil
 }
-func (tes *TestEventService) CreateEvent(*anon.Event) error {
+func (tes *TestEventService) CreateEvent(*domain.Event) error {
 	if tes.ForceCreateEventError {
 		return errors.New("forced test error")
 	}
@@ -86,7 +86,7 @@ func TestGetEventsV1(t *testing.T) {
 	})
 
 	t.Run("TestErrorRetrievingEvents", func(t *testing.T) {
-		e := anon.Event{}
+		e := domain.Event{}
 		tes := TestEventService{
 			ForceCreateEventError: false,
 			ForceGetEventError:    false,
@@ -101,7 +101,7 @@ func TestGetEventsV1(t *testing.T) {
 	})
 
 	t.Run("Success", func(t *testing.T) {
-		e := anon.Event{}
+		e := domain.Event{}
 		tes := TestEventService{
 			ForceCreateEventError: false,
 			ForceGetEventError:    false,

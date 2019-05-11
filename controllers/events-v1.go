@@ -10,13 +10,14 @@ import (
 
 	gin "github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid"
+	domain "github.com/mike-webster/anon-solicitor/app"
 	"github.com/mike-webster/anon-solicitor/data"
 	"github.com/mike-webster/anon-solicitor/env"
 	"github.com/mike-webster/anon-solicitor/tokens"
 )
 
 var (
-	eventServiceKey anon.ContextKey = "EventService"
+	eventServiceKey domain.ContextKey = "EventService"
 )
 
 const (
@@ -76,7 +77,7 @@ func getEventV1(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "events.html", gin.H{"events": []anon.Event{*event}})
+	c.HTML(http.StatusOK, "events.html", gin.H{"events": []domain.Event{*event}})
 }
 
 func postEventsV1(c *gin.Context) {
@@ -89,7 +90,7 @@ func postEventsV1(c *gin.Context) {
 		return
 	}
 
-	postEvent := anon.EventPostParams{}
+	postEvent := domain.EventPostParams{}
 	err = c.Bind(&postEvent)
 	if err != nil {
 		c.Set(controllerErrorKey, true)
@@ -102,7 +103,7 @@ func postEventsV1(c *gin.Context) {
 
 	log.Printf("posted event: %v", postEvent)
 
-	newEvent := anon.Event{
+	newEvent := domain.Event{
 		Title:       postEvent.Title,
 		Description: postEvent.Description,
 		Time:        postEvent.Time,
@@ -148,7 +149,7 @@ func postEventsV1(c *gin.Context) {
 
 			emails[tok.String()] = email
 
-			newFeedback := anon.Feedback{
+			newFeedback := domain.Feedback{
 				Tok:     tok.String(),
 				EventID: posted.ID,
 			}
@@ -191,7 +192,7 @@ func postEventsV1(c *gin.Context) {
 }
 
 // getEventService retrieves the expected EventService with the give key from the gin context
-func getEventService(ctx *gin.Context, key interface{}) (anon.EventService, error) {
+func getEventService(ctx *gin.Context, key interface{}) (domain.EventService, error) {
 	if ctx == nil {
 		return nil, errors.New("provide a gin context in order to retrieve a value")
 	}

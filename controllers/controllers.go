@@ -7,17 +7,17 @@ import (
 	"net/http"
 	"reflect"
 
+	domain "github.com/mike-webster/anon-solicitor/app"
 	"github.com/mike-webster/anon-solicitor/data"
 	"github.com/mike-webster/anon-solicitor/email"
 
 	gin "github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
-	anon "github.com/mike-webster/anon-solicitor"
 	"github.com/mike-webster/anon-solicitor/env"
 )
 
 var (
-	testKey anon.ContextKey = "test"
+	testKey domain.ContextKey = "test"
 )
 
 const (
@@ -92,7 +92,7 @@ func setupRouter(ctx context.Context, db *sqlx.DB) *gin.Engine {
 	return r
 }
 
-func getDependencies(ctx *gin.Context) (anon.EventService, anon.FeedbackService, anon.DeliveryService, error) {
+func getDependencies(ctx *gin.Context) (domain.EventService, domain.FeedbackService, domain.DeliveryService, error) {
 	errs := ""
 
 	es, err := getEventService(ctx, eventServiceKey.String())
@@ -105,7 +105,7 @@ func getDependencies(ctx *gin.Context) (anon.EventService, anon.FeedbackService,
 		errs += err.Error() + ";"
 	}
 
-	em, err := getEmailService(ctx, anon.EmailServiceKey.String())
+	em, err := getEmailService(ctx, domain.EmailServiceKey.String())
 
 	if len(errs) > 1 {
 		return nil, nil, nil, errors.New(errs)
@@ -128,7 +128,7 @@ func setError(c *gin.Context, err error, desc string) {
 }
 
 // getEmailService retrieves the expected EmailService with the give key from the gin context
-func getEmailService(ctx *gin.Context, key interface{}) (anon.DeliveryService, error) {
+func getEmailService(ctx *gin.Context, key interface{}) (domain.DeliveryService, error) {
 	if ctx == nil {
 		return nil, errors.New("provide a gin context in order to retrieve a value")
 	}
