@@ -56,3 +56,9 @@ func String(ctx *gin.Context, key interface{}) (string, error) {
 
 	return s, nil
 }
+
+type DeliveryService interface {
+	SendFeedbackEmail(string, string) error
+}
+
+var EmailServiceKey ContextKey = "EmailService"

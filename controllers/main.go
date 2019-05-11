@@ -4,17 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
+	"reflect"
 
 	"github.com/mike-webster/anon-solicitor/data"
+	"github.com/mike-webster/anon-solicitor/email"
 
 	gin "github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	anon "github.com/mike-webster/anon-solicitor"
 	"github.com/mike-webster/anon-solicitor/env"
-	"github.com/mike-webster/anon-solicitor/tokens"
-	gomail "gopkg.in/gomail.v2"
 )
 
 var (
@@ -30,8 +29,8 @@ const (
 	ErrNotImplemented       = "err_not_implemented"
 )
 
-// StartServer will attempt to run the gin server
-func StartServer(ctx context.Context) {
+// GetRouter will attempt to run the gin router
+func GetRouter(ctx context.Context) *gin.Engine {
 	cfg := env.Config()
 
 	db, err := sqlx.Open("mysql", cfg.ConnectionString)
@@ -40,48 +39,60 @@ func StartServer(ctx context.Context) {
 	}
 
 	defer db.Close()
-	err = data.CreateTables(ctx, db)
-	if err != nil {
-		panic(err)
+
+	createTables, ok := ctx.Value("DropTables").(bool)
+	if !ok {
+		createTables = false
+	}
+	if createTables {
+		err = data.CreateTables(ctx, db)
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	r := setupRouter(ctx, db)
-
-	r.Run(fmt.Sprintf("%v:%v", cfg.Host, cfg.Port))
+	return setupRouter(ctx, db)
 }
 
 func setupRouter(ctx context.Context, db *sqlx.DB) *gin.Engine {
 	r := gin.Default()
-	r.LoadHTMLGlob("templates/*")
+	if env.Target() != "test" {
+		r.LoadHTMLGlob("templates/*")
+	}
 
 	r.Use(setDependencies(ctx, db))
+	r.Use(setStatus())
 
-	r.GET("/", getHomeV1)
-	r.GET("/events", getEventsV1)
-	r.GET("/events/:id", getEventV1)
-	r.POST("/events", postEventsV1)
+	v1Events := r.Group("/v1")
+	{
+		v1Events.GET("/", getHomeV1)
+		v1Events.GET("/events", getEventsV1)
+		v1Events.GET("/events/:id", getEventV1)
+		v1Events.POST("/events", postEventsV1)
+	}
 
 	//r.Use(getToken())
 
 	// TODO: isolate these into a group so I can use the getToken()
 	//       middleware on only these routes.
-	r.GET("/events/:id/feedback/:token", getFeedbackV1)
-	r.POST("/events/:id/feedback/:token", postFeedbackV1)
-	r.POST("/events/:id/feedback/:token/absent", postAbsentFeedbackV1)
+	// TODO: make sure this doesn't cause any weirdness... i'm delcaring a
+	//       second "/v1" on this router
+	v1Feedback := r.Group("/v1")
+	{
+		v1Feedback.GET("/events/:id/feedback/:token", getFeedbackV1)
+		v1Feedback.POST("/events/:id/feedback/:token", postFeedbackV1)
+		v1Feedback.POST("/events/:id/feedback/:token/absent", postAbsentFeedbackV1)
+	}
 
 	// TODO: Catch all 404s
 	// r.NoRoute(func(c *gin.Context) {
 	// 	c.JSON(http.StatusOK, gin.H{"test": "test"})
 	// })
 
-	r.Use(setStatus())
-
-	r.GET("/t", testing)
 	return r
 }
 
-func getDependencies(ctx *gin.Context) (anon.EventService, anon.FeedbackService, error) {
-
+func getDependencies(ctx *gin.Context) (anon.EventService, anon.FeedbackService, anon.DeliveryService, error) {
 	errs := ""
 
 	es, err := getEventService(ctx, eventServiceKey.String())
@@ -94,34 +105,13 @@ func getDependencies(ctx *gin.Context) (anon.EventService, anon.FeedbackService,
 		errs += err.Error() + ";"
 	}
 
+	em, err := getEmailService(ctx, anon.EmailServiceKey.String())
+
 	if len(errs) > 1 {
-		return nil, nil, errors.New(errs)
+		return nil, nil, nil, errors.New(errs)
 	}
 
-	return es, fs, nil
-}
-
-// TODO: move this somewhere else?
-func sendEmail(email string, tok string, eventName string, eventID int64) error {
-	cfg := env.Config()
-	client := gomail.NewDialer(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPass)
-	message := gomail.NewMessage()
-	message.SetHeader("From", fmt.Sprintf("Anon Solicitor <%v>", cfg.SMTPUser))
-	message.SetHeader("To", email)
-	jwt := tokens.GetJWT(cfg.Secret, tok)
-	fbPath := fmt.Sprintf("http://%v/events/%v/feedback/%v", cfg.Host, 1, jwt)
-	body := fmt.Sprintf("<html><body><h3>Hey! We'd like to hear what you think!</h3><p>No worries - it's totally anonymous! Click <a href='%v'>here</a> to submit your feedback and see what everyone else thought!</p><p>Click <a href='%v'>here</a> to let us know that you didn't attend.</p><p>Thanks so much!</p></body></html>", fbPath, fbPath+"/absent")
-
-	message.SetHeader("Title", fmt.Sprintf("You've been invited to give anonymous feedback about: %v", "test event"))
-	message.SetBody("text/html", body)
-
-	if err := client.DialAndSend(message); err != nil {
-		log.Printf("failed to send email. Error: %v", err)
-
-		return err
-	}
-
-	return nil
+	return es, fs, em, nil
 }
 
 func getHomeV1(c *gin.Context) {
@@ -135,4 +125,23 @@ func setError(c *gin.Context, err error, desc string) {
 	})
 
 	c.Set(controllerErrorKey, true)
+}
+
+// getEmailService retrieves the expected EmailService with the give key from the gin context
+func getEmailService(ctx *gin.Context, key interface{}) (anon.DeliveryService, error) {
+	if ctx == nil {
+		return nil, errors.New("provide a gin context in order to retrieve a value")
+	}
+
+	utEs := ctx.Value(key)
+	if utEs == nil {
+		return nil, errors.New("couldnt find key for Email Service in context")
+	}
+
+	es, ok := utEs.(email.DeliveryService)
+	if !ok {
+		return nil, fmt.Errorf("couldnt parse Email Service from context, found: %v", reflect.TypeOf(utEs))
+	}
+
+	return &es, nil
 }
