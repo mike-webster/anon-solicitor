@@ -13,7 +13,7 @@ import (
 var feedbackServiceKey anon.ContextKey = "FeedbackService"
 
 func postAbsentFeedbackV1(c *gin.Context) {
-	_, fs, err := getDependencies(c)
+	_, fs, _, err := getDependencies(c)
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusInternalServerError)
@@ -62,7 +62,7 @@ func postAbsentFeedbackV1(c *gin.Context) {
 }
 
 func getFeedbackV1(c *gin.Context) {
-	es, fs, err := getDependencies(c)
+	es, fs, _, err := getDependencies(c)
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusInternalServerError)

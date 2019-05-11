@@ -30,7 +30,7 @@ const (
 )
 
 func getEventsV1(c *gin.Context) {
-	es, _, err := getDependencies(c)
+	es, _, _, err := getDependencies(c)
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		setError(c, err, ErrRetrievingDependencies)
@@ -50,7 +50,7 @@ func getEventsV1(c *gin.Context) {
 }
 
 func getEventV1(c *gin.Context) {
-	es, _, err := getDependencies(c)
+	es, _, _, err := getDependencies(c)
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		setError(c, err, ErrRetrievingDependencies)
@@ -80,7 +80,7 @@ func getEventV1(c *gin.Context) {
 }
 
 func postEventsV1(c *gin.Context) {
-	es, fs, err := getDependencies(c)
+	es, fs, em, err := getDependencies(c)
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		setError(c, err, ErrRetrievingDependencies)
