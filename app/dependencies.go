@@ -3,6 +3,7 @@ package app
 type AnonDependencies struct {
 	Events   EventService
 	Feedback FeedbackService
+	Delivery DeliveryService
 }
 
 func (ad *AnonDependencies) setEvents(e EventService) error {
@@ -22,7 +23,8 @@ func MockSearchDependencies(opts TestServiceOptions) *AnonDependencies {
 			forceGetEventError:    opts.ForceGetEventError,
 			forceGetEventsError:   opts.ForceGetEventsError,
 		},
-		Feedback: &TestFeedbackService{}}
+		Feedback: &TestFeedbackService{},
+		Delivery: &TestDeliveryService{}}
 	// deps.InitLogger()
 	// deps.InitEs()
 

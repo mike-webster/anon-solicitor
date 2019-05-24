@@ -24,6 +24,7 @@ func setupTestRouter(deps *app.AnonDependencies) *gin.Engine {
 	r.Use(func(c *gin.Context) {
 		c.Set("EventService", deps.Events)
 		c.Set("FeedbackService", deps.Feedback)
+		c.Set("EmailService", deps.Delivery)
 		c.Next()
 	})
 	r.Use(setStatus())
@@ -247,14 +248,34 @@ func TestPostEventV1(t *testing.T) {
 			assert.Equal(t, true, strings.Contains(req.Body.String(), "couldnt find newly created event - id:"), req.Body.String())
 		})
 	})
-
 	t.Run("TestShouldSendEmails", func(t *testing.T) {
-		t.Run("TestCreateFeedbackError", func(t *testing.T) {
+		t.Run("SkipsSendingIfConfigured", func(t *testing.T) {
+			// TODO
+			// os.Setenv("SEND_EMAILS", "false")
+			// e := getValidEventParams()
+			// b, _ := json.Marshal(e)
+			// opts := app.TestServiceOptions{}
+			// deps := app.MockSearchDependencies(opts)
+			// r := setupTestRouter(deps)
+			// req := performRequest(r, "POST", "/v1/events", &b)
+			// assert.Equal(t, http.StatusOK, req.Code, req.Body.String())
 
+			// ds, _ := deps.Delivery.(*app.TestDeliveryService)
+			// assert.Equal(t, 0, ds.GetFeedbackEmailCount())
+
+		})
+		t.Run("TestCreateFeedbackError", func(t *testing.T) {
+			// TODO
 		})
 	})
 
 	t.Run("TestSuccess", func(t *testing.T) {
-
+		e := getValidEventParams()
+		b, _ := json.Marshal(e)
+		opts := app.TestServiceOptions{}
+		deps := app.MockSearchDependencies(opts)
+		r := setupTestRouter(deps)
+		req := performRequest(r, "POST", "/v1/events", &b)
+		assert.Equal(t, http.StatusOK, req.Code, req.Body.String())
 	})
 }

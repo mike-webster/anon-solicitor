@@ -23,6 +23,24 @@ func (tes *TestEventService) setNoErrors() {
 	tes.forceGetEventsError = false
 }
 
+type TestDeliveryService struct {
+	sendFeedbackEmailCount      int
+	forceSendFeedbackEmailError bool
+}
+
+func (tds *TestDeliveryService) SendFeedbackEmail(string, string) error {
+	tds.sendFeedbackEmailCount += 1
+	if tds.forceSendFeedbackEmailError {
+		return errors.New("forced test error")
+	}
+
+	return nil
+}
+
+func (tds *TestDeliveryService) GetFeedbackEmailCount() int {
+	return tds.sendFeedbackEmailCount
+}
+
 type TestFeedbackService struct {
 	forceCreateError           bool
 	forceGetFeedbackByTokError bool
