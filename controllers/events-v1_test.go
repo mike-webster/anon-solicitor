@@ -1,55 +1,25 @@
 package controllers
 
 import (
-	"errors"
 	"net/http"
-	"os"
 	"testing"
 
 	"github.com/bmizerany/assert"
 	gin "github.com/gin-gonic/gin"
-	domain "github.com/mike-webster/anon-solicitor/app"
+	"github.com/mike-webster/anon-solicitor/app"
 )
 
-type TestEventService struct {
-	ForceGetEventError    bool
-	ForceGetEventsError   bool
-	ForceCreateEventError bool
-	Event                 domain.Event
-}
-
-func (tes *TestEventService) GetEvent(ID int64) *domain.Event {
-	if tes.ForceGetEventError {
-		return nil
-	}
-
-	return &tes.Event
-}
-func (tes *TestEventService) GetEvents() (*[]domain.Event, error) {
-	if tes.ForceGetEventsError {
-		return nil, errors.New("forced test error")
-	}
-
-	return &[]domain.Event{tes.Event}, nil
-}
-func (tes *TestEventService) CreateEvent(*domain.Event) error {
-	if tes.ForceCreateEventError {
-		return errors.New("forced test error")
-	}
-
-	return nil
-}
-
 // TODO: restructure this so we use one method for both
-func setupTestRouter(t *TestEventService) *gin.Engine {
+func setupTestRouter(deps *app.AnonDependencies) *gin.Engine {
 	r := gin.Default()
 
+	r.LoadHTMLGlob("../templates/*")
 	r.Use(func(c *gin.Context) {
-		c.Set("EventService", *t)
-
+		c.Set("EventService", deps.Events)
+		c.Set("FeedbackService", deps.Feedback)
 		c.Next()
 	})
-	//r.Use(setStatus())
+	r.Use(setStatus())
 
 	v1Events := r.Group("/v1")
 	{
@@ -59,7 +29,7 @@ func setupTestRouter(t *TestEventService) *gin.Engine {
 		v1Events.POST("/events", postEventsV1)
 	}
 
-	//r.Use(getToken())
+	r.Use(getToken())
 
 	// TODO: isolate these into a group so I can use the getToken()
 	//       middleware on only these routes.
@@ -86,30 +56,18 @@ func TestGetEventsV1(t *testing.T) {
 	})
 
 	t.Run("TestErrorRetrievingEvents", func(t *testing.T) {
-		e := domain.Event{}
-		tes := TestEventService{
-			ForceCreateEventError: false,
-			ForceGetEventError:    false,
-			ForceGetEventsError:   true,
-			Event:                 e,
+		opts := app.TestServiceOptions{
+			ForceGetEventsError: true,
 		}
-
-		r := setupTestRouter(&tes)
+		deps := app.MockSearchDependencies(opts)
+		r := setupTestRouter(deps)
 		req := performRequest(r, "GET", "/v1/events")
-		assert.Equal(t, http.StatusOK, req.Code)
-		assert.Equal(t, false, true, os.Getenv("GO_ENV"))
+		assert.Equal(t, http.StatusInternalServerError, req.Code)
 	})
 
 	t.Run("Success", func(t *testing.T) {
-		e := domain.Event{}
-		tes := TestEventService{
-			ForceCreateEventError: false,
-			ForceGetEventError:    false,
-			ForceGetEventsError:   false,
-			Event:                 e,
-		}
-
-		r := setupTestRouter(&tes)
+		deps := app.MockSearchDependencies(app.TestServiceOptions{})
+		r := setupTestRouter(deps)
 		req := performRequest(r, "GET", "/v1/events")
 		assert.Equal(t, http.StatusOK, req.Code)
 	})
