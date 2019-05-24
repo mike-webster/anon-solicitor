@@ -16,3 +16,6 @@ anon-solicitor
 
 # don't check in docker-compose
 docker-compose.yml
+
+#vscode
+.vscode
