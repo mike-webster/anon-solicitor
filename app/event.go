@@ -23,10 +23,10 @@ type EventService interface {
 
 // EventPostParams represents the information about an Event that a user can create.
 type EventPostParams struct {
-	Title       string    `json:"title" binding:"required,max=200"`
-	Description string    `json:"description" binding:"required,max=5000"`
-	Time        time.Time `json:"scheduled_time" binding:"required"`
-	Audience    []string  `json:"audience" binding:"required"`
+	Title       string    `json:"title" form:"title" binding:"required,max=200"`
+	Description string    `json:"description" form:"description" binding:"required,max=5000"`
+	Time        time.Time `json:"scheduled_time" form:"scheduled_time" binding:"required"`
+	Audience    []string  `json:"audience" form:"audience" binding:"required,min=1"`
 }
 
 // EventPutParams represents the information about an Event that a user can update.

@@ -1,12 +1,19 @@
 package controllers
 
 import (
+	_ "bytes"
+	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/bmizerany/assert"
 	gin "github.com/gin-gonic/gin"
 	"github.com/mike-webster/anon-solicitor/app"
+	domain "github.com/mike-webster/anon-solicitor/app"
 )
 
 // TODO: restructure this so we use one method for both
@@ -61,73 +68,184 @@ func TestGetEventsV1(t *testing.T) {
 		}
 		deps := app.MockSearchDependencies(opts)
 		r := setupTestRouter(deps)
-		req := performRequest(r, "GET", "/v1/events")
+		req := performRequest(r, "GET", "/v1/events", nil)
 		assert.Equal(t, http.StatusInternalServerError, req.Code)
 	})
 
 	t.Run("Success", func(t *testing.T) {
 		deps := app.MockSearchDependencies(app.TestServiceOptions{})
 		r := setupTestRouter(deps)
-		req := performRequest(r, "GET", "/v1/events")
+		req := performRequest(r, "GET", "/v1/events", nil)
 		assert.Equal(t, http.StatusOK, req.Code)
 	})
 }
 
 func TestGetEventV1(t *testing.T) {
-
-	r := gin.New()
-	r.GET("/v1/event", getEventsV1)
-
 	t.Run("TestNoDependencies", func(t *testing.T) {
 		// TODO: figure out how to make this happen
 	})
 
 	t.Run("TestIDLessThan1Invalid", func(t *testing.T) {
+		opts := app.TestServiceOptions{}
+		deps := app.MockSearchDependencies(opts)
+		r := setupTestRouter(deps)
+		req := performRequest(r, "GET", "/v1/events/0", nil)
+		assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 	})
 
 	t.Run("TestIDNotFound", func(t *testing.T) {
+		opts := app.TestServiceOptions{
+			ForceGetEventError: true,
+		}
+		deps := app.MockSearchDependencies(opts)
+		r := setupTestRouter(deps)
+		req := performRequest(r, "GET", fmt.Sprintf("/v1/events/%v", 30000), nil)
+		assert.Equal(t, http.StatusNotFound, req.Code, req.Body.String())
 	})
 
 	t.Run("TestSuccess", func(t *testing.T) {
+		opts := app.TestServiceOptions{}
+		deps := app.MockSearchDependencies(opts)
+		r := setupTestRouter(deps)
+		req := performRequest(r, "GET", "/v1/events/1", nil)
+		assert.Equal(t, http.StatusOK, req.Code, req.Body.String())
 	})
 }
 
+func getValidEventParams() domain.EventPostParams {
+	return domain.EventPostParams{
+		Title:       "Test Title",
+		Description: "Test Description",
+		Time:        time.Now(),
+		Audience:    []string{"test@testemail.com"},
+	}
+}
+
 func TestPostEventV1(t *testing.T) {
-
-	r := gin.New()
-	r.GET("/v1/event", getEventsV1)
-
 	t.Run("TestNoDependencies", func(t *testing.T) {
 		// TODO: figure out how to make this happen
 	})
-
 	t.Run("TestValidation", func(t *testing.T) {
 		t.Run("TitleNotProvided", func(t *testing.T) {
+			e := getValidEventParams()
+			e.Title = ""
+			b, _ := json.Marshal(e)
+			opts := app.TestServiceOptions{}
+			deps := app.MockSearchDependencies(opts)
+			r := setupTestRouter(deps)
+			req := performRequest(r, "POST", "/v1/events", &b)
+			assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 
+			t.Run("ExpectedError", func(t *testing.T) {
+				assert.Equal(t, true, strings.Contains(req.Body.String(), "Key: 'EventPostParams.Title' Error:Field validation for 'Title' failed on the 'required' tag"), req.Body.String())
+			})
 		})
 		t.Run("TitleLongerThanTwoHundredCharacters", func(t *testing.T) {
+			e := getValidEventParams()
+			for i := 0; i < 201; i++ {
+				e.Title += "a"
+			}
+			log.Println("\n\n\n~~~len: ", len(e.Description))
+			b, _ := json.Marshal(e)
+			opts := app.TestServiceOptions{}
+			deps := app.MockSearchDependencies(opts)
+			r := setupTestRouter(deps)
+			req := performRequest(r, "POST", "/v1/events", &b)
+			assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 
+			t.Run("ExpectedError", func(t *testing.T) {
+				assert.Equal(t, true, strings.Contains(req.Body.String(), "Key: 'EventPostParams.Title' Error:Field validation for 'Title' failed on the 'max' tag"), req.Body.String())
+			})
 		})
 		t.Run("DescriptionNotProvided", func(t *testing.T) {
+			e := getValidEventParams()
+			e.Description = ""
+			b, _ := json.Marshal(e)
+			opts := app.TestServiceOptions{}
+			deps := app.MockSearchDependencies(opts)
+			r := setupTestRouter(deps)
+			req := performRequest(r, "POST", "/v1/events", &b)
+			assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 
+			t.Run("ExpectedError", func(t *testing.T) {
+				assert.Equal(t, true, strings.Contains(req.Body.String(), "Key: 'EventPostParams.Description' Error:Field validation for 'Description' failed on the 'required' tag"))
+			})
 		})
 		t.Run("DescriptionLongerThanFiveThousandCharacters", func(t *testing.T) {
+			e := getValidEventParams()
+			e.Description = ""
+			for i := 0; i < 5001; i++ {
+				e.Description += "a"
+			}
+			b, _ := json.Marshal(e)
+			opts := app.TestServiceOptions{}
+			deps := app.MockSearchDependencies(opts)
+			r := setupTestRouter(deps)
+			req := performRequest(r, "POST", "/v1/events", &b)
+			assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 
+			t.Run("ExpectedError", func(t *testing.T) {
+				assert.Equal(t, true, strings.Contains(req.Body.String(), "Key: 'EventPostParams.Description' Error:Field validation for 'Description' failed on the 'max' tag"))
+			})
 		})
 		t.Run("ScheduledTimeNotProvided", func(t *testing.T) {
+			e := getValidEventParams()
+			e.Time = time.Time{}
+			b, _ := json.Marshal(e)
+			opts := app.TestServiceOptions{}
+			deps := app.MockSearchDependencies(opts)
+			r := setupTestRouter(deps)
+			req := performRequest(r, "POST", "/v1/events", &b)
+			assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 
+			t.Run("ExpectedError", func(t *testing.T) {
+				assert.Equal(t, true, strings.Contains(req.Body.String(), "Key: 'EventPostParams.Time' Error:Field validation for 'Time' failed on the 'required' tag"), req.Body.String())
+			})
 		})
 		t.Run("AudienceNotProvided", func(t *testing.T) {
+			e := getValidEventParams()
+			e.Audience = []string{}
+			b, _ := json.Marshal(e)
+			opts := app.TestServiceOptions{}
+			deps := app.MockSearchDependencies(opts)
+			r := setupTestRouter(deps)
+			req := performRequest(r, "POST", "/v1/events", &b)
+			assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 
+			t.Run("ExpectedError", func(t *testing.T) {
+				assert.Equal(t, true, strings.Contains(req.Body.String(), "Key: 'EventPostParams.Audience' Error:Field validation for 'Audience' failed on the 'min' tag"), req.Body.String())
+			})
 		})
 	})
-
 	t.Run("TestCreationError", func(t *testing.T) {
+		e := getValidEventParams()
+		b, _ := json.Marshal(e)
+		opts := app.TestServiceOptions{
+			ForceCreateEventError: true,
+		}
+		deps := app.MockSearchDependencies(opts)
+		r := setupTestRouter(deps)
+		req := performRequest(r, "POST", "/v1/events", &b)
+		assert.Equal(t, http.StatusInternalServerError, req.Code, req.Body.String())
 
+		t.Run("ExpectedError", func(t *testing.T) {
+			assert.Equal(t, true, strings.Contains(req.Body.String(), "forced test error"), req.Body.String())
+		})
 	})
-
 	t.Run("TestVerificationError", func(t *testing.T) {
+		e := getValidEventParams()
+		b, _ := json.Marshal(e)
+		opts := app.TestServiceOptions{
+			ForceGetEventError: true,
+		}
+		deps := app.MockSearchDependencies(opts)
+		r := setupTestRouter(deps)
+		req := performRequest(r, "POST", "/v1/events", &b)
+		assert.Equal(t, http.StatusInternalServerError, req.Code, req.Body.String())
 
+		t.Run("ExpectedError", func(t *testing.T) {
+			assert.Equal(t, true, strings.Contains(req.Body.String(), "couldnt find newly created event - id:"), req.Body.String())
+		})
 	})
 
 	t.Run("TestShouldSendEmails", func(t *testing.T) {

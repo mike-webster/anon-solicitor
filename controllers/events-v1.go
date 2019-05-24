@@ -126,6 +126,7 @@ func postEventsV1(c *gin.Context) {
 	if posted == nil {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusInternalServerError)
+		err := fmt.Errorf("couldnt find newly created event - id: %v", newEvent.ID)
 		setError(c, err, ErrRecordNotFound)
 		log.Printf("error getting created event: %v", err)
 
