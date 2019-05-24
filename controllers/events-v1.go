@@ -10,6 +10,7 @@ import (
 
 	gin "github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid"
+	"github.com/mike-webster/anon-solicitor/app"
 	domain "github.com/mike-webster/anon-solicitor/app"
 	"github.com/mike-webster/anon-solicitor/data"
 	"github.com/mike-webster/anon-solicitor/env"
@@ -200,6 +201,12 @@ func getEventService(ctx *gin.Context, key interface{}) (domain.EventService, er
 	utEs := ctx.Value(key)
 	if utEs == nil {
 		return nil, errors.New("couldnt find key for Event Service in context")
+	}
+
+	tes, ok := utEs.(*app.TestEventService)
+	if ok {
+		log.Print("warning: using test event service")
+		return tes, nil
 	}
 
 	es, ok := utEs.(data.EventService)
