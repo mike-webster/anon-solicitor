@@ -9,7 +9,7 @@ type Event struct {
 	Description        string     `json:"description" binding:"required,max=5000"`
 	Time               time.Time  `json:"scheduled_time" binding:"required"`
 	CreatedAt          time.Time  `json:"created_at" db:"created_at"`
-	UpdatedAt          time.Time  `json:"updated_at" db:"updated_at"`
+	UpdatedAt          *time.Time `json:"updated_at" db:"updated_at"`
 	DeletedAt          *time.Time `json:"deleted_at" db:"deleted_at"`
 	OrganizerQuestions []Question
 	Feedback           []Feedback

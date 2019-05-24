@@ -6,11 +6,26 @@ import (
 	"log"
 	"time"
 
+	// TODO: do I need both of these sql drivers...? Probs not...
+	"github.com/go-sql-driver/mysql"
+
 	"github.com/jmoiron/sqlx"
 	domain "github.com/mike-webster/anon-solicitor/app"
+	"github.com/mike-webster/anon-solicitor/env"
 )
 
+type dbEvent struct {
+	ID          int64
+	Title       string
+	Description string
+	Time        time.Time      `binding:"required"`
+	CreatedAt   time.Time      `db:"created_at"`
+	UpdatedAt   mysql.NullTime `db:"updated_at"`
+	DeletedAt   mysql.NullTime `db:"deleted_at"`
+}
+
 type EventService struct {
+	// TODO: make this private
 	DB *sqlx.DB
 }
 
@@ -21,9 +36,9 @@ func (es *EventService) CreateEvent(event *domain.Event) error {
 
 	createdAt := time.Now().UTC()
 	event.CreatedAt = createdAt
-	event.UpdatedAt = createdAt
+	event.UpdatedAt = &createdAt
 
-	res, err := es.DB.Exec("INSERT INTO events (title, description, time, created_at, updated_at) VALUES (?,?,?,?,?)",
+	res, err := es.Conn().Exec("INSERT INTO events (title, description, time, created_at, updated_at) VALUES (?,?,?,?,?)",
 		event.Title,
 		event.Description,
 		event.Time,
@@ -54,7 +69,7 @@ func (es *EventService) GetEvent(id int64) *domain.Event {
 		return nil
 	}
 
-	rows, err := es.DB.Queryx("SELECT * FROM events WHERE ID = ?", id)
+	rows, err := es.Conn().Queryx("SELECT * FROM events WHERE ID = ?", id)
 	if err != nil {
 		log.Printf("query error: %v", err)
 		return nil
@@ -76,13 +91,79 @@ func (es *EventService) GetEvent(id int64) *domain.Event {
 
 func (es *EventService) GetEvents() (*[]domain.Event, error) {
 	var ret []domain.Event
-
-	err := es.DB.Select(&ret, "SELECT * FROM events")
+	var dbe []dbEvent
+	err := es.Conn().Select(&dbe, "SELECT * FROM events")
 	if err != nil {
 		return nil, err
 	}
 
+	for _, e := range dbe {
+		var del *time.Time
+		var upd *time.Time
+		if e.DeletedAt.Valid {
+			val1, err := e.DeletedAt.Value()
+			if err != nil {
+				log.Println(fmt.Sprint("Error encountered: ", err))
+			}
+			t, ok := val1.(time.Time)
+			if !ok {
+				log.Println(fmt.Sprint("Couldnt cast value to time.Time, val: ", val1))
+			}
+			del = &t
+
+			val2, err := e.UpdatedAt.Value()
+			if err != nil {
+				log.Println(fmt.Sprint("Error encountered: ", err))
+			}
+			t2, ok := val2.(time.Time)
+			if !ok {
+				log.Println(fmt.Sprint("Couldnt cast value to time.Time, val: ", val2))
+			}
+			upd = &t2
+		}
+		ret = append(ret, domain.Event{
+			ID:          e.ID,
+			Title:       e.Title,
+			Description: e.Description,
+			Time:        e.Time,
+			CreatedAt:   e.CreatedAt,
+			UpdatedAt:   upd,
+			DeletedAt:   del,
+		})
+	}
+
 	return &ret, nil
+}
+
+// Conn will get a database connection.
+// This uses a cached pointer.
+func (es *EventService) Conn() *sqlx.DB {
+	if es.DB == nil {
+		log.Println("No DB connection - establishing...")
+		cfg := env.Config()
+		db, err := sqlx.Open("mysql", cfg.ConnectionString)
+		if err != nil {
+			panic(fmt.Sprint("Couldn't load database; error", err))
+		}
+		es.DB = db
+		return es.DB
+	}
+
+	err := es.DB.Ping()
+	if err != nil {
+		log.Println("No DB connection - ping failed/ establishing...")
+
+		cfg := env.Config()
+		db, err := sqlx.Open("mysql", cfg.ConnectionString)
+		if err != nil {
+			panic(fmt.Sprint("Couldn't establish database connection; err: ", err))
+		}
+		es.DB = db
+		return es.DB
+	}
+	log.Println("DB connection - ping success!")
+
+	return es.DB
 }
 
 type FeedbackService struct {
