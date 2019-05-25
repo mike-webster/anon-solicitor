@@ -2,10 +2,14 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
+	"log"
 	"net/http"
+	"reflect"
 	"strconv"
 
 	gin "github.com/gin-gonic/gin"
+	"github.com/mike-webster/anon-solicitor/app"
 	domain "github.com/mike-webster/anon-solicitor/app"
 	"github.com/mike-webster/anon-solicitor/data"
 )
@@ -129,14 +133,19 @@ func postFeedbackV1(c *gin.Context) {
 
 // Feedback retrieves the expected EventService with the give key from the gin context
 func getFeedbackService(ctx *gin.Context, key interface{}) (domain.FeedbackService, error) {
-
 	if ctx == nil {
 		return nil, errors.New("provide a gin context in order to retrieve a value")
 	}
 
+	tfs, ok := ctx.Value(key).(*app.TestFeedbackService)
+	if ok {
+		log.Print("warning: using test feedback service")
+		return tfs, nil
+	}
+
 	fs, ok := ctx.Value(key).(data.FeedbackService)
 	if !ok {
-		return nil, errors.New("couldnt parse Feedback Service from context")
+		return nil, fmt.Errorf("couldnt parse Feedback Service from context; found %v", reflect.TypeOf(ctx.Value(key)))
 	}
 
 	return fs, nil
