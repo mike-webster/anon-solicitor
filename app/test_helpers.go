@@ -2,12 +2,14 @@ package app
 
 import (
 	"errors"
+	"log"
 )
 
 type TestServiceOptions struct {
-	ForceGetEventError    bool
-	ForceGetEventsError   bool
-	ForceCreateEventError bool
+	ForceGetEventError       bool
+	ForceGetEventsError      bool
+	ForceCreateEventError    bool
+	ForceCreateFeedbackError bool
 }
 
 type TestEventService struct {
@@ -29,7 +31,8 @@ type TestDeliveryService struct {
 }
 
 func (tds *TestDeliveryService) SendFeedbackEmail(string, string) error {
-	tds.sendFeedbackEmailCount += 1
+	tds.sendFeedbackEmailCount++
+	log.Print("~~~sending feedback email")
 	if tds.forceSendFeedbackEmailError {
 		return errors.New("forced test error")
 	}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -14,6 +15,7 @@ import (
 	gin "github.com/gin-gonic/gin"
 	"github.com/mike-webster/anon-solicitor/app"
 	domain "github.com/mike-webster/anon-solicitor/app"
+	"github.com/mike-webster/anon-solicitor/env"
 )
 
 // TODO: restructure this so we use one method for both
@@ -250,26 +252,46 @@ func TestPostEventV1(t *testing.T) {
 	})
 	t.Run("TestShouldSendEmails", func(t *testing.T) {
 		t.Run("SkipsSendingIfConfigured", func(t *testing.T) {
-			// TODO
-			// os.Setenv("SEND_EMAILS", "false")
-			// e := getValidEventParams()
-			// b, _ := json.Marshal(e)
-			// opts := app.TestServiceOptions{}
-			// deps := app.MockSearchDependencies(opts)
-			// r := setupTestRouter(deps)
-			// req := performRequest(r, "POST", "/v1/events", &b)
-			// assert.Equal(t, http.StatusOK, req.Code, req.Body.String())
+			os.Setenv("SEND_EMAILS", "false")
+			t.Run("ConfiguredCorrectly", func(t *testing.T) {
+				assert.Equal(t, "false", os.Getenv("SEND_EMAILS"))
+			})
 
-			// ds, _ := deps.Delivery.(*app.TestDeliveryService)
-			// assert.Equal(t, 0, ds.GetFeedbackEmailCount())
-
+			b, _ := json.Marshal(getValidEventParams())
+			deps := app.MockSearchDependencies(app.TestServiceOptions{})
+			r := setupTestRouter(deps)
+			req := performRequest(r, "POST", "/v1/events", &b)
+			assert.Equal(t, http.StatusOK, req.Code, req.Body.String())
+			t.Run("EmailsWerentSent", func(t *testing.T) {
+				ds, _ := deps.Delivery.(*app.TestDeliveryService)
+				assert.Equal(t, 0, ds.GetFeedbackEmailCount())
+			})
 		})
 		t.Run("TestCreateFeedbackError", func(t *testing.T) {
-			// TODO
+			os.Setenv("SEND_EMAILS", "true")
+			t.Run("ConfiguredCorrectly", func(t *testing.T) {
+				assert.Equal(t, "true", os.Getenv("SEND_EMAILS"))
+			})
+
+			b, _ := json.Marshal(getValidEventParams())
+			opts := app.TestServiceOptions{
+				ForceCreateFeedbackError: true,
+			}
+			deps := app.MockSearchDependencies(opts)
+			r := setupTestRouter(deps)
+			req := performRequest(r, "POST", "/v1/events", &b)
+			assert.Equal(t, http.StatusOK, req.Code, req.Body.String())
+			t.Run("EmailsWerentSent", func(t *testing.T) {
+				ds, _ := deps.Delivery.(*app.TestDeliveryService)
+				assert.Equal(t, 0, ds.GetFeedbackEmailCount())
+			})
 		})
 	})
 
 	t.Run("TestSuccess", func(t *testing.T) {
+		cfg := env.Config()
+		cfg.ShouldSendEmails = true
+
 		e := getValidEventParams()
 		b, _ := json.Marshal(e)
 		opts := app.TestServiceOptions{}
@@ -277,5 +299,9 @@ func TestPostEventV1(t *testing.T) {
 		r := setupTestRouter(deps)
 		req := performRequest(r, "POST", "/v1/events", &b)
 		assert.Equal(t, http.StatusOK, req.Code, req.Body.String())
+		t.Run("EmailsWereSent", func(t *testing.T) {
+			ds, _ := deps.Delivery.(*app.TestDeliveryService)
+			assert.Equal(t, 1, ds.GetFeedbackEmailCount())
+		})
 	})
 }

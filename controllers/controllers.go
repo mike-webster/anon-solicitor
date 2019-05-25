@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"reflect"
 
+	"github.com/mike-webster/anon-solicitor/app"
 	domain "github.com/mike-webster/anon-solicitor/app"
 	"github.com/mike-webster/anon-solicitor/data"
 	"github.com/mike-webster/anon-solicitor/email"
@@ -136,6 +138,12 @@ func getEmailService(ctx *gin.Context, key interface{}) (domain.DeliveryService,
 	utEs := ctx.Value(key)
 	if utEs == nil {
 		return nil, errors.New("couldnt find key for Email Service in context")
+	}
+
+	tes, ok := utEs.(*app.TestDeliveryService)
+	if ok {
+		log.Print("warning: using test delivery service")
+		return tes, nil
 	}
 
 	es, ok := utEs.(email.DeliveryService)

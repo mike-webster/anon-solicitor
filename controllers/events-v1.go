@@ -134,7 +134,6 @@ func postEventsV1(c *gin.Context) {
 	}
 
 	if env.Config().ShouldSendEmails {
-
 		emails := map[string]string{}
 
 		for _, email := range postEvent.Audience {
