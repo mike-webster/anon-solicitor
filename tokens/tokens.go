@@ -16,14 +16,16 @@ import (
 const issuer = "anon-solicitor"
 
 // GetJWT will return a valid JWT containing the provided information
-func GetJWT(secret string, tok string) string {
+func GetJWT(secret string, payload map[string]interface{}) string {
 	header := "{\"alg\": \"HS256\", \"typ\": \"JWT\"}"
-	payload := fmt.Sprintf("{\"iss\":\"%v\",\"exp\":\"%v\",\"tok\":\"%v\"}",
-		issuer, time.Now().UTC().Add(30*time.Minute).Unix(), tok)
+
+	payload["iss"] = issuer
+	payload["exp"] = time.Now().UTC().Add(30 * time.Minute).Unix()
+	pl, _ := json.Marshal(payload)
 
 	h := hmac.New(sha256.New, []byte(secret))
 	s1 := base64.URLEncoding.EncodeToString([]byte(header))
-	s2 := base64.URLEncoding.EncodeToString([]byte(payload))
+	s2 := base64.URLEncoding.EncodeToString([]byte(string(pl)))
 	h.Write([]byte(s1 + "." + s2))
 	sha := hex.EncodeToString(h.Sum(nil))
 	s3 := base64.URLEncoding.EncodeToString([]byte(sha))
@@ -82,8 +84,6 @@ func CheckToken(token string, secret string) (string, error) {
 				return "", errors.New("coldn't parse tok from token")
 			}
 			return ret, nil
-		case "userid":
-			fmt.Println(v)
 		default:
 			fmt.Println("unknown key : ", k, " -- value: ", v)
 		}
