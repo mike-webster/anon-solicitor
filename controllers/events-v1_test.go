@@ -18,8 +18,12 @@ import (
 	"github.com/mike-webster/anon-solicitor/env"
 )
 
+var headers = map[string]string{
+	"Content-Type": "application/json",
+}
+
 // TODO: restructure this so we use one method for both
-func setupTestRouter(deps *app.AnonDependencies) *gin.Engine {
+func setupTestRouter(deps *app.AnonDependencies, useAuth bool) *gin.Engine {
 	r := gin.Default()
 
 	r.LoadHTMLGlob("../templates/*")
@@ -39,8 +43,9 @@ func setupTestRouter(deps *app.AnonDependencies) *gin.Engine {
 		v1Events.POST("/events", postEventsV1)
 	}
 
-	r.Use(getToken())
-
+	if useAuth {
+		r.Use(getToken())
+	}
 	// TODO: isolate these into a group so I can use the getToken()
 	//       middleware on only these routes.
 	// TODO: make sure this doesn't cause any weirdness... i'm delcaring a
@@ -70,15 +75,15 @@ func TestGetEventsV1(t *testing.T) {
 			ForceGetEventsError: true,
 		}
 		deps := app.MockSearchDependencies(opts)
-		r := setupTestRouter(deps)
-		req := performRequest(r, "GET", "/v1/events", nil)
+		r := setupTestRouter(deps, true)
+		req := performRequest(r, "GET", "/v1/events", nil, headers)
 		assert.Equal(t, http.StatusInternalServerError, req.Code)
 	})
 
 	t.Run("Success", func(t *testing.T) {
 		deps := app.MockSearchDependencies(app.TestServiceOptions{})
-		r := setupTestRouter(deps)
-		req := performRequest(r, "GET", "/v1/events", nil)
+		r := setupTestRouter(deps, true)
+		req := performRequest(r, "GET", "/v1/events", nil, headers)
 		assert.Equal(t, http.StatusOK, req.Code)
 	})
 }
@@ -91,8 +96,8 @@ func TestGetEventV1(t *testing.T) {
 	t.Run("TestIDLessThan1Invalid", func(t *testing.T) {
 		opts := app.TestServiceOptions{}
 		deps := app.MockSearchDependencies(opts)
-		r := setupTestRouter(deps)
-		req := performRequest(r, "GET", "/v1/events/0", nil)
+		r := setupTestRouter(deps, true)
+		req := performRequest(r, "GET", "/v1/events/0", nil, headers)
 		assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 	})
 
@@ -101,16 +106,16 @@ func TestGetEventV1(t *testing.T) {
 			ForceGetEventError: true,
 		}
 		deps := app.MockSearchDependencies(opts)
-		r := setupTestRouter(deps)
-		req := performRequest(r, "GET", fmt.Sprintf("/v1/events/%v", 30000), nil)
+		r := setupTestRouter(deps, true)
+		req := performRequest(r, "GET", fmt.Sprintf("/v1/events/%v", 30000), nil, headers)
 		assert.Equal(t, http.StatusNotFound, req.Code, req.Body.String())
 	})
 
 	t.Run("TestSuccess", func(t *testing.T) {
 		opts := app.TestServiceOptions{}
 		deps := app.MockSearchDependencies(opts)
-		r := setupTestRouter(deps)
-		req := performRequest(r, "GET", "/v1/events/1", nil)
+		r := setupTestRouter(deps, true)
+		req := performRequest(r, "GET", "/v1/events/1", nil, headers)
 		assert.Equal(t, http.StatusOK, req.Code, req.Body.String())
 	})
 }
@@ -135,8 +140,8 @@ func TestPostEventV1(t *testing.T) {
 			b, _ := json.Marshal(e)
 			opts := app.TestServiceOptions{}
 			deps := app.MockSearchDependencies(opts)
-			r := setupTestRouter(deps)
-			req := performRequest(r, "POST", "/v1/events", &b)
+			r := setupTestRouter(deps, true)
+			req := performRequest(r, "POST", "/v1/events", &b, headers)
 			assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 
 			t.Run("ExpectedError", func(t *testing.T) {
@@ -152,8 +157,8 @@ func TestPostEventV1(t *testing.T) {
 			b, _ := json.Marshal(e)
 			opts := app.TestServiceOptions{}
 			deps := app.MockSearchDependencies(opts)
-			r := setupTestRouter(deps)
-			req := performRequest(r, "POST", "/v1/events", &b)
+			r := setupTestRouter(deps, true)
+			req := performRequest(r, "POST", "/v1/events", &b, headers)
 			assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 
 			t.Run("ExpectedError", func(t *testing.T) {
@@ -166,8 +171,8 @@ func TestPostEventV1(t *testing.T) {
 			b, _ := json.Marshal(e)
 			opts := app.TestServiceOptions{}
 			deps := app.MockSearchDependencies(opts)
-			r := setupTestRouter(deps)
-			req := performRequest(r, "POST", "/v1/events", &b)
+			r := setupTestRouter(deps, true)
+			req := performRequest(r, "POST", "/v1/events", &b, headers)
 			assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 
 			t.Run("ExpectedError", func(t *testing.T) {
@@ -183,8 +188,8 @@ func TestPostEventV1(t *testing.T) {
 			b, _ := json.Marshal(e)
 			opts := app.TestServiceOptions{}
 			deps := app.MockSearchDependencies(opts)
-			r := setupTestRouter(deps)
-			req := performRequest(r, "POST", "/v1/events", &b)
+			r := setupTestRouter(deps, true)
+			req := performRequest(r, "POST", "/v1/events", &b, headers)
 			assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 
 			t.Run("ExpectedError", func(t *testing.T) {
@@ -197,8 +202,8 @@ func TestPostEventV1(t *testing.T) {
 			b, _ := json.Marshal(e)
 			opts := app.TestServiceOptions{}
 			deps := app.MockSearchDependencies(opts)
-			r := setupTestRouter(deps)
-			req := performRequest(r, "POST", "/v1/events", &b)
+			r := setupTestRouter(deps, true)
+			req := performRequest(r, "POST", "/v1/events", &b, headers)
 			assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 
 			t.Run("ExpectedError", func(t *testing.T) {
@@ -211,8 +216,8 @@ func TestPostEventV1(t *testing.T) {
 			b, _ := json.Marshal(e)
 			opts := app.TestServiceOptions{}
 			deps := app.MockSearchDependencies(opts)
-			r := setupTestRouter(deps)
-			req := performRequest(r, "POST", "/v1/events", &b)
+			r := setupTestRouter(deps, true)
+			req := performRequest(r, "POST", "/v1/events", &b, headers)
 			assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 
 			t.Run("ExpectedError", func(t *testing.T) {
@@ -227,8 +232,8 @@ func TestPostEventV1(t *testing.T) {
 			ForceCreateEventError: true,
 		}
 		deps := app.MockSearchDependencies(opts)
-		r := setupTestRouter(deps)
-		req := performRequest(r, "POST", "/v1/events", &b)
+		r := setupTestRouter(deps, true)
+		req := performRequest(r, "POST", "/v1/events", &b, headers)
 		assert.Equal(t, http.StatusInternalServerError, req.Code, req.Body.String())
 
 		t.Run("ExpectedError", func(t *testing.T) {
@@ -242,8 +247,8 @@ func TestPostEventV1(t *testing.T) {
 			ForceGetEventError: true,
 		}
 		deps := app.MockSearchDependencies(opts)
-		r := setupTestRouter(deps)
-		req := performRequest(r, "POST", "/v1/events", &b)
+		r := setupTestRouter(deps, true)
+		req := performRequest(r, "POST", "/v1/events", &b, headers)
 		assert.Equal(t, http.StatusInternalServerError, req.Code, req.Body.String())
 
 		t.Run("ExpectedError", func(t *testing.T) {
@@ -259,8 +264,8 @@ func TestPostEventV1(t *testing.T) {
 
 			b, _ := json.Marshal(getValidEventParams())
 			deps := app.MockSearchDependencies(app.TestServiceOptions{})
-			r := setupTestRouter(deps)
-			req := performRequest(r, "POST", "/v1/events", &b)
+			r := setupTestRouter(deps, true)
+			req := performRequest(r, "POST", "/v1/events", &b, headers)
 			assert.Equal(t, http.StatusOK, req.Code, req.Body.String())
 			t.Run("EmailsWerentSent", func(t *testing.T) {
 				ds, _ := deps.Delivery.(*app.TestDeliveryService)
@@ -278,8 +283,8 @@ func TestPostEventV1(t *testing.T) {
 				ForceCreateFeedbackError: true,
 			}
 			deps := app.MockSearchDependencies(opts)
-			r := setupTestRouter(deps)
-			req := performRequest(r, "POST", "/v1/events", &b)
+			r := setupTestRouter(deps, true)
+			req := performRequest(r, "POST", "/v1/events", &b, headers)
 			assert.Equal(t, http.StatusOK, req.Code, req.Body.String())
 			t.Run("EmailsWerentSent", func(t *testing.T) {
 				ds, _ := deps.Delivery.(*app.TestDeliveryService)
@@ -296,8 +301,8 @@ func TestPostEventV1(t *testing.T) {
 		b, _ := json.Marshal(e)
 		opts := app.TestServiceOptions{}
 		deps := app.MockSearchDependencies(opts)
-		r := setupTestRouter(deps)
-		req := performRequest(r, "POST", "/v1/events", &b)
+		r := setupTestRouter(deps, true)
+		req := performRequest(r, "POST", "/v1/events", &b, headers)
 		assert.Equal(t, http.StatusOK, req.Code, req.Body.String())
 		t.Run("EmailsWereSent", func(t *testing.T) {
 			ds, _ := deps.Delivery.(*app.TestDeliveryService)

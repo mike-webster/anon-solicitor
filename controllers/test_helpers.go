@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func performRequest(r http.Handler, method string, path string, body *[]byte) *httptest.ResponseRecorder {
+func performRequest(r http.Handler, method string, path string, body *[]byte, headers map[string]string) *httptest.ResponseRecorder {
 	var req *http.Request
 	if body != nil {
 		reader := strings.NewReader(string(*body))
@@ -17,7 +17,9 @@ func performRequest(r http.Handler, method string, path string, body *[]byte) *h
 		log.Println("Sending empty test body")
 		req, _ = http.NewRequest(method, path, nil)
 	}
-	req.Header.Add("Content-Type", "application/json")
+	for k, v := range headers {
+		req.Header.Add(k, v)
+	}
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 	return w
