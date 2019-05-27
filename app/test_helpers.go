@@ -6,10 +6,12 @@ import (
 )
 
 type TestServiceOptions struct {
-	ForceGetEventError       bool
-	ForceGetEventsError      bool
-	ForceCreateEventError    bool
-	ForceCreateFeedbackError bool
+	ForceGetEventError            bool
+	ForceGetEventsError           bool
+	ForceCreateEventError         bool
+	ForceCreateFeedbackError      bool
+	ForceGetFeedbackByTokError    bool
+	ForceGetFeedbackByTokNotFound bool
 }
 
 type TestEventService struct {
@@ -45,10 +47,11 @@ func (tds *TestDeliveryService) GetFeedbackEmailCount() int {
 }
 
 type TestFeedbackService struct {
-	forceCreateError           bool
-	forceGetFeedbackByTokError bool
-	forceMarkFeedbackAbsent    bool
-	Feedback                   Feedback
+	forceCreateError              bool
+	forceGetFeedbackByTokError    bool
+	forceGetFeedbackByTokNotFound bool
+	forceMarkFeedbackAbsent       bool
+	Feedback                      Feedback
 }
 
 func (tfs *TestFeedbackService) CreateFeedback(*Feedback) error {
@@ -62,6 +65,10 @@ func (tfs *TestFeedbackService) CreateFeedback(*Feedback) error {
 func (tfs *TestFeedbackService) GetFeedbackByTok(string) (*Feedback, error) {
 	if tfs.forceGetFeedbackByTokError {
 		return nil, errors.New("forced test error")
+	}
+
+	if tfs.forceGetFeedbackByTokNotFound {
+		return nil, nil
 	}
 
 	return &tfs.Feedback, nil
