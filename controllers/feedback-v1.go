@@ -33,12 +33,6 @@ func postAbsentFeedbackV1(c *gin.Context) {
 		setError(c, err, ErrBadToken)
 
 		return
-	} else if len(tok) < 1 {
-		c.Set(controllerErrorKey, true)
-		c.Set(controllerRespStatusKey, http.StatusUnauthorized)
-		setError(c, err, ErrNoToken)
-
-		return
 	}
 
 	fb, err := fs.GetFeedbackByTok(tok)
