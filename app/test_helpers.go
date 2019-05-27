@@ -11,6 +11,7 @@ type TestServiceOptions struct {
 	ForceCreateEventError         bool
 	ForceCreateFeedbackError      bool
 	ForceGetFeedbackByTokError    bool
+	ForceMarkFeedbackAbsentError  bool
 	ForceGetFeedbackByTokNotFound bool
 }
 
@@ -50,7 +51,7 @@ type TestFeedbackService struct {
 	forceCreateError              bool
 	forceGetFeedbackByTokError    bool
 	forceGetFeedbackByTokNotFound bool
-	forceMarkFeedbackAbsent       bool
+	forceMarkFeedbackAbsentError  bool
 	Feedback                      Feedback
 }
 
@@ -75,7 +76,7 @@ func (tfs *TestFeedbackService) GetFeedbackByTok(string) (*Feedback, error) {
 }
 
 func (tfs *TestFeedbackService) MarkFeedbackAbsent(*Feedback) error {
-	if tfs.forceMarkFeedbackAbsent {
+	if tfs.forceMarkFeedbackAbsentError {
 		return errors.New("forced test error")
 	}
 

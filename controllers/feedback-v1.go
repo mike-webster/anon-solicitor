@@ -56,7 +56,7 @@ func postAbsentFeedbackV1(c *gin.Context) {
 	// TODO: update this to show a thanks for letting us know message
 	c.HTML(http.StatusOK,
 		"feedback.html",
-		gin.H{"feedback": *fb})
+		gin.H{"feedback": nil})
 }
 
 func getFeedbackV1(c *gin.Context) {

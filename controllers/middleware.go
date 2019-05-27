@@ -44,6 +44,7 @@ func getToken() gin.HandlerFunc {
 		cfg := env.Config()
 		token := c.Param("token")
 		if len(token) < 1 {
+			log.Println("token not found in request - 401")
 			c.AbortWithStatus(http.StatusUnauthorized)
 
 			return
@@ -51,17 +52,20 @@ func getToken() gin.HandlerFunc {
 
 		tok, err := tokens.CheckToken(token, cfg.Secret)
 		if err != nil {
+			log.Println("token invalid - 401 - ", err)
 			c.AbortWithError(http.StatusUnauthorized, err)
 
 			return
 		}
 
 		if len(tok) < 1 {
+			log.Println("no tok in jwt - 401")
 			c.AbortWithError(http.StatusUnauthorized, errors.New("couldn't find token"))
 
 			return
 		}
 
+		log.Println(fmt.Sprint("tok: ", tok))
 		c.Set("tok", tok)
 		c.Next()
 	}
