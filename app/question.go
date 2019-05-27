@@ -4,13 +4,14 @@ import "time"
 
 // Question fd
 type Question struct {
-	ID        int64
-	Content   string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt time.Time
+	ID          int64
+	Title       string
+	Description string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   time.Time
 }
 
 type QuestionService interface {
-	CreateQuestion(*Question) error
+	Create(*Question) error
 }
