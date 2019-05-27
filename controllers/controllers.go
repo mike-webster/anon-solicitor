@@ -73,7 +73,7 @@ func setupRouter(ctx context.Context, db *sqlx.DB) *gin.Engine {
 		v1Events.POST("/events", postEventsV1)
 	}
 
-	//r.Use(getToken())
+	r.Use(getToken())
 
 	// TODO: isolate these into a group so I can use the getToken()
 	//       middleware on only these routes.
