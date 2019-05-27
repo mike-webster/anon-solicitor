@@ -53,7 +53,6 @@ func setupTestRouter(deps *app.AnonDependencies, useAuth bool) *gin.Engine {
 	v1Feedback := r.Group("/v1")
 	{
 		v1Feedback.GET("/events/:id/feedback/:token", getFeedbackV1)
-		v1Feedback.POST("/events/:id/feedback/:token", postFeedbackV1)
 		v1Feedback.POST("/events/:id/feedback/:token/absent", postAbsentFeedbackV1)
 	}
 

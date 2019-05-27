@@ -118,13 +118,6 @@ func getFeedbackV1(c *gin.Context) {
 	c.HTML(http.StatusOK, "feedback.html", gin.H{"feedback": []domain.Feedback{*fb}})
 }
 
-func postFeedbackV1(c *gin.Context) {
-	// TODO: Implement
-	c.Set(controllerErrorKey, true)
-	c.Set(controllerRespStatusKey, http.StatusNotImplemented)
-	setError(c, errors.New("...coming soon..."), ErrNotImplemented)
-}
-
 // Feedback retrieves the expected EventService with the give key from the gin context
 func getFeedbackService(ctx *gin.Context, key interface{}) (domain.FeedbackService, error) {
 	if ctx == nil {

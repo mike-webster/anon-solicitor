@@ -126,7 +126,3 @@ func TestPostAbsentFeedbackV1(t *testing.T) {
 		assert.Equal(t, http.StatusOK, req.Code)
 	})
 }
-
-func TestPostFeedbackV1(t *testing.T) {
-	// TODO
-}
