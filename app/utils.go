@@ -51,7 +51,7 @@ func String(ctx *gin.Context, key interface{}) (string, error) {
 
 	s, ok := ctx.Value(key).(string)
 	if !ok {
-		return "", errors.New("couldnt parse string from context")
+		return "", fmt.Errorf("couldnt parse string from context - key: [%v] : value [%v]", key, s)
 	}
 
 	return s, nil
