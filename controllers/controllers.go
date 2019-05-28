@@ -29,6 +29,7 @@ const (
 	ErrBadToken             = "err_invalid_token"
 	ErrUpdatingRecord       = "err_record_update"
 	ErrNotImplemented       = "err_not_implemented"
+	ErrNotAllowed           = "err_not_allowed"
 )
 
 // GetRouter will attempt to run the gin router

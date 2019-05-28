@@ -19,6 +19,7 @@ type TestEventService struct {
 	forceGetEventError    bool
 	forceGetEventsError   bool
 	forceCreateEventError bool
+	forceAddQuestionError bool
 	Event                 Event
 }
 
