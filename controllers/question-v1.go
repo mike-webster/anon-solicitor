@@ -8,8 +8,6 @@ import (
 
 	gin "github.com/gin-gonic/gin"
 	domain "github.com/mike-webster/anon-solicitor/app"
-	"github.com/mike-webster/anon-solicitor/env"
-	"github.com/mike-webster/anon-solicitor/tokens"
 )
 
 func postQuestionV1(c *gin.Context) {
@@ -22,16 +20,7 @@ func postQuestionV1(c *gin.Context) {
 		return
 	}
 
-	tok, err := domain.String(c, "tok")
-	if err != nil {
-		c.Set(controllerErrorKey, true)
-		c.Set(controllerRespStatusKey, http.StatusUnauthorized)
-		setError(c, err, ErrBadToken)
-
-		return
-	}
-
-	payload, err := tokens.CheckToken(tok, env.Config().Secret)
+	payload, err := domain.MapStringInterface(c, "tok")
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusUnauthorized)

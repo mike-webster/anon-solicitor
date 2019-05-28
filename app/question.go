@@ -15,9 +15,9 @@ type Question struct {
 }
 
 type QuestionPostParams struct {
-	Title   string
-	Content string
-	Answers string // This is for "options" for the question, delimited by ";;"
+	Title   string `json:"title" binding:"required,max=5000"`
+	Content string `json:"content" binding:"max=5000"`
+	Answers string `json:"answers" binding:"max=5000"` // This is for "options" for the question, delimited by ";;"
 }
 
 type QuestionService interface {
