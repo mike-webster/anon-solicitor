@@ -106,3 +106,11 @@ func (tes *TestEventService) CreateEvent(*Event) error {
 
 	return nil
 }
+
+func (tes *TestEventService) AddQuestion(*Question) error {
+	if tes.forceAddQuestionError {
+		return errors.New("forced test error")
+	}
+
+	return nil
+}

@@ -19,6 +19,7 @@ type EventService interface {
 	GetEvent(int64) *Event
 	GetEvents() (*[]Event, error)
 	CreateEvent(*Event) error
+	AddQuestion(*Question) error
 }
 
 // EventPostParams represents the information about an Event that a user can create.
