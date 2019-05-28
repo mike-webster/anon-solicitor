@@ -30,6 +30,7 @@ const (
 	ErrTokenCreation          = "err_token_not_created"
 	ErrEmail                  = "err_sending_email"
 	RoleAudience              = "audience"
+	RoleOwner                 = "owner"
 )
 
 func getEventsV1(c *gin.Context) {
@@ -173,6 +174,7 @@ func postEventsV1(c *gin.Context) {
 			payload := map[string]interface{}{}
 			payload["tok"] = k
 			payload["role"] = RoleAudience
+			payload["eid"] = posted.ID
 
 			fbPath := fmt.Sprintf("http://%v/events/%v/feedback/%v",
 				cfg.Host,
