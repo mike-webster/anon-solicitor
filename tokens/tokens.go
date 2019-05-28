@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 )
@@ -33,11 +34,11 @@ func GetJWT(secret string, payload map[string]interface{}) string {
 }
 
 // CheckToken will take a token an attempt to validate it using the given secret
-func CheckToken(token string, secret string) (string, error) {
+func CheckToken(token string, secret string) (map[string]interface{}, error) {
 	sections := strings.Split(token, ".")
 	if len(sections) != 3 {
 		// not correct format
-		return "", errors.New("Invalid Format")
+		return map[string]interface{}{}, errors.New("Invalid Format")
 	}
 
 	checkString := fmt.Sprintf("%v.%v", sections[0], sections[1])
@@ -48,19 +49,19 @@ func CheckToken(token string, secret string) (string, error) {
 
 	if s3 != sections[2] {
 		// signature doesn't match - do not authorize
-		return "", errors.New("invalid signature")
+		return map[string]interface{}{}, errors.New("invalid signature")
 	}
 
 	pMap := map[string]interface{}{}
 
 	payload, err := base64.URLEncoding.DecodeString(sections[1])
 	if err != nil {
-		return "", errors.New("couldn't decode payload")
+		return map[string]interface{}{}, errors.New("couldn't decode payload")
 	}
 
 	err = json.Unmarshal([]byte(payload), &pMap)
 	if err != nil {
-		return "", errors.New("couldn't parse payload after decoding")
+		return map[string]interface{}{}, errors.New("couldn't parse payload after decoding")
 	}
 
 	for k, v := range pMap {
@@ -68,27 +69,21 @@ func CheckToken(token string, secret string) (string, error) {
 		case "iss":
 			val, _ := v.(string)
 			if val != issuer {
-				return "", errors.New("invalid issuer")
+				return map[string]interface{}{}, errors.New("invalid issuer")
 			}
 		case "exp":
 			val, ok := v.(float64)
 			if !ok {
-				return "", errors.New(fmt.Sprint("couldnt parse expiration value: ", val))
+				return map[string]interface{}{}, errors.New(fmt.Sprint("couldnt parse expiration value: ", val))
 			}
 			exp := time.Unix(int64(val), 0)
 			if time.Now().UTC().Unix() >= exp.Unix() {
-				return "", errors.New(fmt.Sprint("expired session, ", val))
+				return map[string]interface{}{}, errors.New(fmt.Sprint("expired session, ", val))
 			}
-		case "tok":
-			ret, ok := v.(string)
-			if !ok {
-				return "", errors.New("coldn't parse tok from token")
-			}
-			return ret, nil
 		default:
-			fmt.Println("unknown key : ", k, " -- value: ", v)
+			log.Println("skipping validation for key : ", k, " -- value: ", v)
 		}
 	}
 
-	return "", nil
+	return pMap, nil
 }

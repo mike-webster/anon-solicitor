@@ -21,5 +21,5 @@ func TestTokens(t *testing.T) {
 	assert.Equal(t, true, len(jwt) > 0, jwt)
 	ret, err := CheckToken(jwt, cfg.Secret)
 	assert.Equal(t, nil, err, err)
-	assert.Equal(t, tok, ret)
+	assert.Equal(t, tok, ret["tok"])
 }
