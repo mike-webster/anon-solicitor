@@ -18,8 +18,8 @@ import (
 	"github.com/mike-webster/anon-solicitor/env"
 )
 
-var headers = map[string]string{
-	"Content-Type": "application/json",
+func getTestHeaders() map[string]string {
+	return map[string]string{"Content-Type": "application/json"}
 }
 
 // TODO: restructure this so we use one method for both
@@ -52,8 +52,8 @@ func setupTestRouter(deps *app.AnonDependencies, useAuth bool) *gin.Engine {
 	//       second "/v1" on this router
 	v1Feedback := r.Group("/v1")
 	{
-		v1Feedback.GET("/events/:id/feedback/:token", getFeedbackV1)
-		v1Feedback.POST("/events/:id/feedback/:token/absent", postAbsentFeedbackV1)
+		v1Feedback.GET("/events/:id/feedback", getFeedbackV1)
+		v1Feedback.POST("/events/:id/feedback/absent", postAbsentFeedbackV1)
 	}
 
 	// TODO: Catch all 404s
@@ -70,6 +70,7 @@ func TestGetEventsV1(t *testing.T) {
 	})
 
 	t.Run("TestErrorRetrievingEvents", func(t *testing.T) {
+		headers := getTestHeaders()
 		opts := app.TestServiceOptions{
 			ForceGetEventsError: true,
 		}
@@ -80,6 +81,7 @@ func TestGetEventsV1(t *testing.T) {
 	})
 
 	t.Run("Success", func(t *testing.T) {
+		headers := getTestHeaders()
 		deps := app.MockSearchDependencies(app.TestServiceOptions{})
 		r := setupTestRouter(deps, true)
 		req := performRequest(r, "GET", "/v1/events", nil, headers)
@@ -93,6 +95,7 @@ func TestGetEventV1(t *testing.T) {
 	})
 
 	t.Run("TestIDLessThan1Invalid", func(t *testing.T) {
+		headers := getTestHeaders()
 		opts := app.TestServiceOptions{}
 		deps := app.MockSearchDependencies(opts)
 		r := setupTestRouter(deps, true)
@@ -101,6 +104,7 @@ func TestGetEventV1(t *testing.T) {
 	})
 
 	t.Run("TestIDNotFound", func(t *testing.T) {
+		headers := getTestHeaders()
 		opts := app.TestServiceOptions{
 			ForceGetEventError: true,
 		}
@@ -111,6 +115,7 @@ func TestGetEventV1(t *testing.T) {
 	})
 
 	t.Run("TestSuccess", func(t *testing.T) {
+		headers := getTestHeaders()
 		opts := app.TestServiceOptions{}
 		deps := app.MockSearchDependencies(opts)
 		r := setupTestRouter(deps, true)
@@ -134,6 +139,7 @@ func TestPostEventV1(t *testing.T) {
 	})
 	t.Run("TestValidation", func(t *testing.T) {
 		t.Run("TitleNotProvided", func(t *testing.T) {
+			headers := getTestHeaders()
 			e := getValidEventParams()
 			e.Title = ""
 			b, _ := json.Marshal(e)
@@ -148,6 +154,7 @@ func TestPostEventV1(t *testing.T) {
 			})
 		})
 		t.Run("TitleLongerThanTwoHundredCharacters", func(t *testing.T) {
+			headers := getTestHeaders()
 			e := getValidEventParams()
 			for i := 0; i < 201; i++ {
 				e.Title += "a"
@@ -165,6 +172,7 @@ func TestPostEventV1(t *testing.T) {
 			})
 		})
 		t.Run("DescriptionNotProvided", func(t *testing.T) {
+			headers := getTestHeaders()
 			e := getValidEventParams()
 			e.Description = ""
 			b, _ := json.Marshal(e)
@@ -179,6 +187,7 @@ func TestPostEventV1(t *testing.T) {
 			})
 		})
 		t.Run("DescriptionLongerThanFiveThousandCharacters", func(t *testing.T) {
+			headers := getTestHeaders()
 			e := getValidEventParams()
 			e.Description = ""
 			for i := 0; i < 5001; i++ {
@@ -196,6 +205,7 @@ func TestPostEventV1(t *testing.T) {
 			})
 		})
 		t.Run("ScheduledTimeNotProvided", func(t *testing.T) {
+			headers := getTestHeaders()
 			e := getValidEventParams()
 			e.Time = time.Time{}
 			b, _ := json.Marshal(e)
@@ -210,6 +220,7 @@ func TestPostEventV1(t *testing.T) {
 			})
 		})
 		t.Run("AudienceNotProvided", func(t *testing.T) {
+			headers := getTestHeaders()
 			e := getValidEventParams()
 			e.Audience = []string{}
 			b, _ := json.Marshal(e)
@@ -225,6 +236,7 @@ func TestPostEventV1(t *testing.T) {
 		})
 	})
 	t.Run("TestCreationError", func(t *testing.T) {
+		headers := getTestHeaders()
 		e := getValidEventParams()
 		b, _ := json.Marshal(e)
 		opts := app.TestServiceOptions{
@@ -240,6 +252,7 @@ func TestPostEventV1(t *testing.T) {
 		})
 	})
 	t.Run("TestVerificationError", func(t *testing.T) {
+		headers := getTestHeaders()
 		e := getValidEventParams()
 		b, _ := json.Marshal(e)
 		opts := app.TestServiceOptions{
@@ -256,6 +269,7 @@ func TestPostEventV1(t *testing.T) {
 	})
 	t.Run("TestShouldSendEmails", func(t *testing.T) {
 		t.Run("SkipsSendingIfConfigured", func(t *testing.T) {
+			headers := getTestHeaders()
 			os.Setenv("SEND_EMAILS", "false")
 			t.Run("ConfiguredCorrectly", func(t *testing.T) {
 				assert.Equal(t, "false", os.Getenv("SEND_EMAILS"))
@@ -272,6 +286,7 @@ func TestPostEventV1(t *testing.T) {
 			})
 		})
 		t.Run("TestCreateFeedbackError", func(t *testing.T) {
+			headers := getTestHeaders()
 			os.Setenv("SEND_EMAILS", "true")
 			t.Run("ConfiguredCorrectly", func(t *testing.T) {
 				assert.Equal(t, "true", os.Getenv("SEND_EMAILS"))
@@ -293,6 +308,7 @@ func TestPostEventV1(t *testing.T) {
 	})
 
 	t.Run("TestSuccess", func(t *testing.T) {
+		headers := getTestHeaders()
 		cfg := env.Config()
 		cfg.ShouldSendEmails = true
 
