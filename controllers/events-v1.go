@@ -170,7 +170,7 @@ func postEventsV1(c *gin.Context) {
 		// send email to each audience member
 		for k, v := range emails {
 			payload := map[string]interface{}{"tok": k}
-			fbPath := fmt.Sprintf("http://%v/events/%v/feedback/%v",
+			fbPath := fmt.Sprintf("http://%v/events/%v/feedback?token=%v",
 				cfg.Host,
 				posted.ID,
 				tokens.GetJWT(cfg.Secret, payload))
