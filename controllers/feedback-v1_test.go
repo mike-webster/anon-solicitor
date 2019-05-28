@@ -32,57 +32,69 @@ func TestGetFeedbackV1(t *testing.T) {
 	})
 
 	t.Run("TokenError", func(t *testing.T) {
+		headers := getTestHeaders()
 		opts := app.TestServiceOptions{}
 		deps := app.MockSearchDependencies(opts)
 		r := setupTestRouter(deps, false)
-		req := performRequest(r, "GET", "/v1/events/1/feedback/bad_token", nil, headers)
+		req := performRequest(r, "GET", "/v1/events/1/feedback", nil, headers)
 		assert.Equal(t, http.StatusUnauthorized, req.Code)
 	})
 
 	t.Run("IdLessThanOne", func(t *testing.T) {
+		headers := getTestHeaders()
 		opts := app.TestServiceOptions{}
 		deps := app.MockSearchDependencies(opts)
 		r := setupTestRouter(deps, true)
-		req := performRequest(r, "GET", fmt.Sprintf("/v1/events/-1/feedback?token=%v", "cd625b90-1dde-4e76-a3d6-9ce8693ac6e1"), nil, headers)
+		req := performRequest(r, "GET", "/v1/events/-1/feedback", nil, headers)
 		assert.Equal(t, http.StatusUnauthorized, req.Code)
 	})
 
 	t.Run("EventNotFound", func(t *testing.T) {
-		opts := app.TestServiceOptions{}
+		headers := getTestHeaders()
+		headers["token"] = getTestTok()
+		opts := app.TestServiceOptions{
+			ForceGetEventError: true,
+		}
 		deps := app.MockSearchDependencies(opts)
-		r := setupTestRouter(deps, false)
-		req := performRequest(r, "GET", fmt.Sprintf("/v1/events/1000000/feedback?token=%v", "cd625b90-1dde-4e76-a3d6-9ce8693ac6e1"), nil, headers)
+		r := setupTestRouter(deps, true)
+		req := performRequest(r, "GET", "/v1/events/1000000/feedback", nil, headers)
 		assert.Equal(t, http.StatusNotFound, req.Code)
 	})
 
 	t.Run("GetFeedbackByTokError", func(t *testing.T) {
+		headers := getTestHeaders()
 		opts := app.TestServiceOptions{
 			ForceGetFeedbackByTokError: true,
 		}
 		deps := app.MockSearchDependencies(opts)
 		r := setupTestRouter(deps, true)
 		tok := getTestTok()
+		headers["token"] = tok
 		req := performRequest(r, "GET", fmt.Sprintf("/v1/events/1/feedback/%v?token=%v", tok, tok), nil, headers)
 		assert.Equal(t, http.StatusNotFound, req.Code)
 	})
 
 	t.Run("FeedbackNotFound", func(t *testing.T) {
+		headers := getTestHeaders()
 		opts := app.TestServiceOptions{
 			ForceGetFeedbackByTokNotFound: true,
 		}
 		deps := app.MockSearchDependencies(opts)
 		r := setupTestRouter(deps, true)
 		tok := getTestTok()
+		headers["token"] = tok
 		req := performRequest(r, "GET", fmt.Sprintf("/v1/events/1/feedback/%v?token=%v", tok, tok), nil, headers)
 		assert.Equal(t, http.StatusNotFound, req.Code)
 	})
 
 	t.Run("Success", func(t *testing.T) {
+		headers := getTestHeaders()
 		opts := app.TestServiceOptions{}
 		deps := app.MockSearchDependencies(opts)
 		r := setupTestRouter(deps, true)
 		tok := getTestTok()
-		req := performRequest(r, "GET", fmt.Sprintf("/v1/events/1/feedback/%v?token=%v", tok, tok), nil, headers)
+		headers["token"] = tok
+		req := performRequest(r, "GET", "/v1/events/1/feedback", nil, headers)
 		assert.Equal(t, http.StatusOK, req.Code)
 	})
 }
@@ -93,15 +105,18 @@ func TestPostAbsentFeedbackV1(t *testing.T) {
 	})
 
 	t.Run("TokenError", func(t *testing.T) {
+		headers := getTestHeaders()
 		opts := app.TestServiceOptions{}
 		deps := app.MockSearchDependencies(opts)
 		r := setupTestRouter(deps, false)
-		req := performRequest(r, "POST", "/v1/events/1/feedback/bad_token/absent", nil, headers)
+		req := performRequest(r, "POST", "/v1/events/1/feedback/absent", nil, headers)
 		assert.Equal(t, http.StatusUnauthorized, req.Code)
 	})
 
 	t.Run("GetFeedbackByTokError", func(t *testing.T) {
+		headers := getTestHeaders()
 		tok := getTestTok()
+		headers["token"] = tok
 		opts := app.TestServiceOptions{
 			ForceGetFeedbackByTokError: true,
 		}
@@ -112,22 +127,26 @@ func TestPostAbsentFeedbackV1(t *testing.T) {
 	})
 
 	t.Run("MarkFeedbackAbsentError", func(t *testing.T) {
+		headers := getTestHeaders()
 		tok := getTestTok()
+		headers["token"] = tok
 		opts := app.TestServiceOptions{
 			ForceMarkFeedbackAbsentError: true,
 		}
 		deps := app.MockSearchDependencies(opts)
 		r := setupTestRouter(deps, true)
-		req := performRequest(r, "POST", fmt.Sprintf("/v1/events/1/feedback/%v/absent", tok), nil, headers)
+		req := performRequest(r, "POST", "/v1/events/1/feedback/absent", nil, headers)
 		assert.Equal(t, http.StatusInternalServerError, req.Code)
 	})
 
 	t.Run("Success", func(t *testing.T) {
+		headers := getTestHeaders()
 		tok := getTestTok()
+		headers["token"] = tok
 		opts := app.TestServiceOptions{}
 		deps := app.MockSearchDependencies(opts)
 		r := setupTestRouter(deps, true)
-		req := performRequest(r, "POST", fmt.Sprintf("/v1/events/1/feedback/%v/absent", tok), nil, headers)
+		req := performRequest(r, "POST", "/v1/events/1/feedback/absent", nil, headers)
 		assert.Equal(t, http.StatusOK, req.Code)
 	})
 }

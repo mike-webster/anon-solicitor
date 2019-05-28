@@ -42,12 +42,17 @@ func getToken() gin.HandlerFunc {
 		//       I just wanted to do it. :)
 		// TODO: test this
 		cfg := env.Config()
-		token := c.Param("token")
+		token := c.Request.Header.Get("token")
 		if len(token) < 1 {
-			log.Println("token not found in request - 401")
-			c.AbortWithStatus(http.StatusUnauthorized)
+			log.Println("token not found in header, checking query string")
 
-			return
+			token := c.Param("token")
+			if len(token) < 1 {
+				log.Println("token not found - 401")
+				c.AbortWithStatus(http.StatusUnauthorized)
+
+				return
+			}
 		}
 
 		tok, err := tokens.CheckToken(token, cfg.Secret)

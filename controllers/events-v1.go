@@ -176,7 +176,7 @@ func postEventsV1(c *gin.Context) {
 			payload["role"] = RoleAudience
 			payload["eid"] = posted.ID
 
-			fbPath := fmt.Sprintf("http://%v/events/%v/feedback/%v",
+			fbPath := fmt.Sprintf("http://%v/events/%v/feedback?token=%v",
 				cfg.Host,
 				posted.ID,
 				tokens.GetJWT(cfg.Secret, payload))
