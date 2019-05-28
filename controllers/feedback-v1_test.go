@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/bmizerany/assert"
 	"github.com/gofrs/uuid"
@@ -17,7 +18,12 @@ var cfg = env.Config()
 
 func getTestTok() string {
 	id, _ := uuid.NewV4()
-	return tokens.GetJWT(cfg.Secret, id.String())
+	payload := map[string]interface{}{
+		"tok": id.String(),
+		"exp": time.Now().UTC().Add(30 * time.Minute).Unix(),
+		"iss": "anon-test",
+	}
+	return tokens.GetJWT(cfg.Secret, payload)
 }
 
 func TestGetFeedbackV1(t *testing.T) {
@@ -95,8 +101,7 @@ func TestPostAbsentFeedbackV1(t *testing.T) {
 	})
 
 	t.Run("GetFeedbackByTokError", func(t *testing.T) {
-		id, _ := uuid.NewV4()
-		tok := tokens.GetJWT(cfg.Secret, id.String())
+		tok := getTestTok()
 		opts := app.TestServiceOptions{
 			ForceGetFeedbackByTokError: true,
 		}
