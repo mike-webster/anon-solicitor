@@ -29,6 +29,7 @@ const (
 	ErrRecordCreation         = "err_record_not_created"
 	ErrTokenCreation          = "err_token_not_created"
 	ErrEmail                  = "err_sending_email"
+	RoleAudience              = "audience"
 )
 
 func getEventsV1(c *gin.Context) {
@@ -169,7 +170,10 @@ func postEventsV1(c *gin.Context) {
 		// TODO: test this part
 		// send email to each audience member
 		for k, v := range emails {
-			payload := map[string]interface{}{"tok": k}
+			payload := map[string]interface{}{}
+			payload["tok"] = k
+			payload["role"] = RoleAudience
+
 			fbPath := fmt.Sprintf("http://%v/events/%v/feedback/%v",
 				cfg.Host,
 				posted.ID,
