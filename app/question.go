@@ -14,6 +14,12 @@ type Question struct {
 	DeletedAt time.Time
 }
 
+type QuestionPostParams struct {
+	Title   string
+	Content string
+	Answers string // This is for "options" for the question, delimited by ";;"
+}
+
 type QuestionService interface {
 	Create(*Question) error
 }
