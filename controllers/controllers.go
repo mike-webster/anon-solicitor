@@ -81,8 +81,8 @@ func setupRouter(ctx context.Context, db *sqlx.DB) *gin.Engine {
 	//       second "/v1" on this router
 	v1Feedback := r.Group("/v1")
 	{
-		v1Feedback.GET("/events/:id/feedback/:token", getFeedbackV1)
-		v1Feedback.POST("/events/:id/feedback/:token/absent", postAbsentFeedbackV1)
+		v1Feedback.GET("/events/:id/feedback", getFeedbackV1)
+		v1Feedback.POST("/events/:id/feedback/absent", postAbsentFeedbackV1)
 	}
 
 	// TODO: Catch all 404s
