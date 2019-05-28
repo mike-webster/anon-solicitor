@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -72,13 +71,15 @@ func CheckToken(token string, secret string) (string, error) {
 				return "", errors.New("invalid issuer")
 			}
 		case "exp":
-			val, _ := v.(string)
-			vall, _ := strconv.Atoi(val)
-			if time.Now().UTC().Unix() >= int64(vall) {
-				return "", errors.New(fmt.Sprint("expired session, ", vall))
+			val, ok := v.(float64)
+			if !ok {
+				return "", errors.New(fmt.Sprint("couldnt parse expiration value: ", val))
+			}
+			exp := time.Unix(int64(val), 0)
+			if time.Now().UTC().Unix() >= exp.Unix() {
+				return "", errors.New(fmt.Sprint("expired session, ", val))
 			}
 		case "tok":
-			fmt.Println("tok")
 			ret, ok := v.(string)
 			if !ok {
 				return "", errors.New("coldn't parse tok from token")
