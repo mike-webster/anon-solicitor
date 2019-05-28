@@ -85,9 +85,10 @@ func setupRouter(ctx context.Context, db *sqlx.DB) *gin.Engine {
 		v1Feedback.POST("/events/:id/feedback/:token/absent", postAbsentFeedbackV1)
 	}
 
-v1Question := r.Group("/v1"){
-	v1Question.POST("/questions/:eventid/:token", postQuestionV1)
-}
+	v1Question := r.Group("/v1")
+	{
+		v1Question.POST("/questions/:eventid/:token", postQuestionV1)
+	}
 
 	// TODO: Catch all 404s
 	// r.NoRoute(func(c *gin.Context) {
