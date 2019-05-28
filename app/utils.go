@@ -43,6 +43,20 @@ func Bool(ctx *gin.Context, key interface{}) (*bool, error) {
 	return &b, nil
 }
 
+func MapStringInterface(ctx *gin.Context, key interface{}) (map[string]interface{}, error) {
+	var ret map[string]interface{}
+	if ctx == nil {
+		return ret, errors.New("provide a gin context in order to retrieve a value")
+	}
+
+	ret, ok := ctx.Value(key).(map[string]interface{})
+	if !ok {
+		return ret, errors.New("couldnt parse map[string]interface from context")
+	}
+
+	return ret, nil
+}
+
 // String retrieves the expected string value with the given key from the gin context
 func String(ctx *gin.Context, key interface{}) (string, error) {
 	if ctx == nil {

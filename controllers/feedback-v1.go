@@ -26,11 +26,20 @@ func postAbsentFeedbackV1(c *gin.Context) {
 		return
 	}
 
-	tok, err := domain.String(c, "tok")
+	payload, err := domain.MapStringInterface(c, "tok")
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusUnauthorized)
 		setError(c, err, ErrBadToken)
+
+		return
+	}
+
+	tok, ok := payload["tok"].(string)
+	if !ok {
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusUnauthorized)
+		setError(c, err, "err_couldnt_parse_token")
 
 		return
 	}
@@ -69,8 +78,17 @@ func getFeedbackV1(c *gin.Context) {
 		return
 	}
 
-	tok, err := domain.String(c, "tok")
+	payload, err := domain.MapStringInterface(c, "tok")
 	if err != nil {
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusUnauthorized)
+		setError(c, err, ErrBadToken)
+
+		return
+	}
+
+	tok, ok := payload["tok"].(string)
+	if !ok {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusUnauthorized)
 		setError(c, err, ErrBadToken)
