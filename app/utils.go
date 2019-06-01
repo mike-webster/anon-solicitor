@@ -51,7 +51,7 @@ func MapStringInterface(ctx *gin.Context, key interface{}) (map[string]interface
 
 	ret, ok := ctx.Value(key).(map[string]interface{})
 	if !ok {
-		return ret, errors.New("couldnt parse map[string]interface from context")
+		return ret, errors.New(fmt.Sprint("couldnt parse map[string]interface from context - ", ctx.Value(key)))
 	}
 
 	return ret, nil
