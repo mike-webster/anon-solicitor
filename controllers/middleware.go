@@ -95,7 +95,13 @@ func setStatus() gin.HandlerFunc {
 			} else {
 				log.Print("responseStatus not found - defaulting to 500")
 			}
-			c.AbortWithStatusJSON(respStatus, gin.H{"msg": "sorry - we encountered an error and we're working on it!", "errors": c.Errors})
+			//c.AbortWithStatus(respStatus)
+			ret := map[string]interface{}{}
+			ret["msg"] = "sorry - we encountered an error and we're working on it!"
+			if len(c.Errors) > 0 {
+				ret["errors"] = c.Errors
+			}
+			c.AbortWithStatusJSON(respStatus, ret)
 
 			return
 		}
