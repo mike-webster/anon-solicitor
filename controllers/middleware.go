@@ -85,17 +85,21 @@ func setStatus() gin.HandlerFunc {
 			status, ok := c.Get(controllerRespStatusKey)
 			respStatus := http.StatusInternalServerError
 			if ok {
-				respStatus, ok = status.(int)
+				log.Println(fmt.Sprint("error status found: ", status))
+				s, ok := status.(int)
 				if !ok {
 					c.Error(gin.Error{
 						Err:  fmt.Errorf("Error processing resp status as int: %v", respStatus),
 						Meta: "middleware.setStatus",
 					})
+				} else {
+					respStatus = s
+					fmt.Println(fmt.Sprint("updated status: ", respStatus))
 				}
 			} else {
 				log.Print("responseStatus not found - defaulting to 500")
 			}
-			//c.AbortWithStatus(respStatus)
+
 			ret := map[string]interface{}{}
 			ret["msg"] = "sorry - we encountered an error and we're working on it!"
 			if len(c.Errors) > 0 {
