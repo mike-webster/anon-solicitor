@@ -168,6 +168,92 @@ func (es *EventService) AddQuestion(q *domain.Question) error {
 
 	return nil
 }
+func (es *EventService) GetQuestion(ID int64) *domain.Question {
+	if ID < 1 {
+		return nil
+	}
+
+	rows, err := es.Conn().Queryx("SELECT * FROM questions WHERE ID = ?", ID)
+	if err != nil {
+		log.Printf("query error: %v", err)
+		return nil
+	}
+
+	if rows.Next() {
+		var ret domain.Question
+		err = rows.StructScan(&ret)
+		if err != nil {
+			log.Printf("struct scan error: %v", err)
+			return nil
+		}
+
+		return &ret
+	}
+
+	return nil
+}
+
+func (es *EventService) CanUserAnswerQuestion(ID int64, tok string) bool {
+	if ID < 1 {
+		return false
+	}
+
+	if len(tok) < 1 {
+		return false
+	}
+
+	rows, err := es.Conn().Queryx("SELECT * FROM answers WHERE question_id = ? AND token = ?", ID, tok)
+	if err != nil {
+		log.Printf("query error: %v", err)
+		return false
+	}
+
+	if rows.Next() {
+		var ret domain.Answer
+		err = rows.StructScan(&ret)
+		if err != nil {
+			log.Printf("struct scan error: %v", err)
+			return false
+		}
+
+		return false
+	}
+
+	return true
+}
+
+func (es *EventService) AddAnswer(a *domain.Answer) error {
+	if a == nil {
+		return errors.New("must pass answer in order to add")
+	}
+
+	createdAt := time.Now().UTC()
+	a.CreatedAt = createdAt
+
+	res, err := es.Conn().Exec("INSERT INTO answers (question_id, event_id, content, token, created_at) VALUES (?,?,?,?,?)",
+		a.QuestionID,
+		a.EventID,
+		a.Content,
+		a.Token,
+		a.CreatedAt,
+	)
+	if err != nil {
+		return err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	log.Printf("-- newly created answer id: %v", id)
+
+	a.ID = id
+
+	log.Printf("-- assigning question id: %v", a.ID)
+
+	return nil
+}
 
 // Conn will get a database connection.
 // This uses a cached pointer.
