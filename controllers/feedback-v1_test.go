@@ -16,13 +16,17 @@ import (
 
 var cfg = env.Config()
 
-func getTestTok() string {
+func getTestTok(inPayload *map[string]interface{}) string {
 	id, _ := uuid.NewV4()
-	payload := map[string]interface{}{
-		"tok": id.String(),
-		"exp": time.Now().UTC().Add(30 * time.Minute).Unix(),
-		"iss": "anon-test",
+	payload := map[string]interface{}{}
+	if inPayload != nil {
+		for k, v := range *inPayload {
+			payload[k] = v
+		}
 	}
+	payload["tok"] = id.String()
+	payload["exp"] = time.Now().UTC().Add(30 * time.Minute).Unix()
+	payload["iss"] = "anon-test"
 	return tokens.GetJWT(cfg.Secret, payload)
 }
 
@@ -51,7 +55,7 @@ func TestGetFeedbackV1(t *testing.T) {
 
 	t.Run("EventNotFound", func(t *testing.T) {
 		headers := getTestHeaders()
-		headers["token"] = getTestTok()
+		headers["token"] = getTestTok(nil)
 		opts := app.TestServiceOptions{
 			ForceGetEventError: true,
 		}
@@ -68,7 +72,7 @@ func TestGetFeedbackV1(t *testing.T) {
 		}
 		deps := app.MockSearchDependencies(opts)
 		r := setupTestRouter(deps, true)
-		tok := getTestTok()
+		tok := getTestTok(nil)
 		headers["token"] = tok
 		req := performRequest(r, "GET", fmt.Sprintf("/v1/events/1/feedback/%v?token=%v", tok, tok), nil, headers)
 		assert.Equal(t, http.StatusNotFound, req.Code)
@@ -81,7 +85,7 @@ func TestGetFeedbackV1(t *testing.T) {
 		}
 		deps := app.MockSearchDependencies(opts)
 		r := setupTestRouter(deps, true)
-		tok := getTestTok()
+		tok := getTestTok(nil)
 		headers["token"] = tok
 		req := performRequest(r, "GET", fmt.Sprintf("/v1/events/1/feedback/%v?token=%v", tok, tok), nil, headers)
 		assert.Equal(t, http.StatusNotFound, req.Code)
@@ -92,7 +96,7 @@ func TestGetFeedbackV1(t *testing.T) {
 		opts := app.TestServiceOptions{}
 		deps := app.MockSearchDependencies(opts)
 		r := setupTestRouter(deps, true)
-		tok := getTestTok()
+		tok := getTestTok(nil)
 		headers["token"] = tok
 		req := performRequest(r, "GET", "/v1/events/1/feedback", nil, headers)
 		assert.Equal(t, http.StatusOK, req.Code)
@@ -115,7 +119,7 @@ func TestPostAbsentFeedbackV1(t *testing.T) {
 
 	t.Run("GetFeedbackByTokError", func(t *testing.T) {
 		headers := getTestHeaders()
-		tok := getTestTok()
+		tok := getTestTok(nil)
 		headers["token"] = tok
 		opts := app.TestServiceOptions{
 			ForceGetFeedbackByTokError: true,
@@ -128,7 +132,7 @@ func TestPostAbsentFeedbackV1(t *testing.T) {
 
 	t.Run("MarkFeedbackAbsentError", func(t *testing.T) {
 		headers := getTestHeaders()
-		tok := getTestTok()
+		tok := getTestTok(nil)
 		headers["token"] = tok
 		opts := app.TestServiceOptions{
 			ForceMarkFeedbackAbsentError: true,
@@ -141,7 +145,7 @@ func TestPostAbsentFeedbackV1(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		headers := getTestHeaders()
-		tok := getTestTok()
+		tok := getTestTok(nil)
 		headers["token"] = tok
 		opts := app.TestServiceOptions{}
 		deps := app.MockSearchDependencies(opts)

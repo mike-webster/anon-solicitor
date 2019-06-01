@@ -56,6 +56,10 @@ func setupTestRouter(deps *app.AnonDependencies, useAuth bool) *gin.Engine {
 		v1Feedback.POST("/events/:id/feedback/absent", postAbsentFeedbackV1)
 	}
 
+	v1Question := r.Group("/v1")
+	{
+		v1Question.POST("/questions/:eventid", postQuestionV1)
+	}
 	// TODO: Catch all 404s
 	// r.NoRoute(func(c *gin.Context) {
 	// 	c.JSON(http.StatusOK, gin.H{"test": "test"})
@@ -264,6 +268,7 @@ func TestPostEventV1(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, req.Code, req.Body.String())
 
 		t.Run("ExpectedError", func(t *testing.T) {
+			assert.NotEqual(t, http.StatusOK, req.Code)
 			assert.Equal(t, true, strings.Contains(req.Body.String(), "couldnt find newly created event - id:"), req.Body.String())
 		})
 	})

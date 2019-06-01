@@ -135,6 +135,40 @@ func (es *EventService) GetEvents() (*[]domain.Event, error) {
 	return &ret, nil
 }
 
+func (es *EventService) AddQuestion(q *domain.Question) error {
+	if q == nil {
+		return errors.New("must pass question in order to add")
+	}
+
+	createdAt := time.Now().UTC()
+	q.CreatedAt = createdAt
+	q.UpdatedAt = createdAt
+
+	res, err := es.Conn().Exec("INSERT INTO questions (event_id, content, answers, created_at, updated_at) VALUES (?,?,?,?,?)",
+		q.EventID,
+		q.Content,
+		q.Answers,
+		q.CreatedAt,
+		q.UpdatedAt,
+	)
+	if err != nil {
+		return err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	log.Printf("-- newly created question id: %v", id)
+
+	q.ID = id
+
+	log.Printf("-- assigning question id: %v", q.ID)
+
+	return nil
+}
+
 // Conn will get a database connection.
 // This uses a cached pointer.
 func (es *EventService) Conn() *sqlx.DB {

@@ -6,6 +6,7 @@ import (
 )
 
 type TestServiceOptions struct {
+	ForceAddQuestionError         bool
 	ForceGetEventError            bool
 	ForceGetEventsError           bool
 	ForceCreateEventError         bool
@@ -19,13 +20,8 @@ type TestEventService struct {
 	forceGetEventError    bool
 	forceGetEventsError   bool
 	forceCreateEventError bool
+	forceAddQuestionError bool
 	Event                 Event
-}
-
-func (tes *TestEventService) setNoErrors() {
-	tes.forceGetEventError = false
-	tes.forceCreateEventError = false
-	tes.forceGetEventsError = false
 }
 
 type TestDeliveryService struct {
@@ -101,6 +97,14 @@ func (tes *TestEventService) GetEvents() (*[]Event, error) {
 
 func (tes *TestEventService) CreateEvent(*Event) error {
 	if tes.forceCreateEventError {
+		return errors.New("forced test error")
+	}
+
+	return nil
+}
+
+func (tes *TestEventService) AddQuestion(*Question) error {
+	if tes.forceAddQuestionError {
 		return errors.New("forced test error")
 	}
 

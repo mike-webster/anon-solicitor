@@ -29,6 +29,7 @@ const (
 	ErrBadToken             = "err_invalid_token"
 	ErrUpdatingRecord       = "err_record_update"
 	ErrNotImplemented       = "err_not_implemented"
+	ErrNotAllowed           = "err_not_allowed"
 )
 
 // GetRouter will attempt to run the gin router
@@ -73,7 +74,7 @@ func setupRouter(ctx context.Context, db *sqlx.DB) *gin.Engine {
 		v1Events.POST("/events", postEventsV1)
 	}
 
-	//r.Use(getToken())
+	r.Use(getToken())
 
 	// TODO: isolate these into a group so I can use the getToken()
 	//       middleware on only these routes.
@@ -83,6 +84,11 @@ func setupRouter(ctx context.Context, db *sqlx.DB) *gin.Engine {
 	{
 		v1Feedback.GET("/events/:id/feedback", getFeedbackV1)
 		v1Feedback.POST("/events/:id/feedback/absent", postAbsentFeedbackV1)
+	}
+
+	v1Question := r.Group("/v1")
+	{
+		v1Question.POST("/questions/:eventid", postQuestionV1)
 	}
 
 	// TODO: Catch all 404s
