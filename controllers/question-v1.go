@@ -163,7 +163,6 @@ func postQuestionAnswerV1(c *gin.Context) {
 	}
 
 	token, _ := payload["tok"].(string)
-
 	if !es.CanUserAnswerQuestion(question.ID, token) {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusForbidden)

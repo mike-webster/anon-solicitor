@@ -19,10 +19,12 @@ func (ad *AnonDependencies) setFeedback(f FeedbackService) error {
 func MockSearchDependencies(opts TestServiceOptions) *AnonDependencies {
 	deps := &AnonDependencies{
 		Events: &TestEventService{
-			forceCreateEventError: opts.ForceCreateEventError,
-			forceGetEventError:    opts.ForceGetEventError,
-			forceGetEventsError:   opts.ForceGetEventsError,
-			forceAddQuestionError: opts.ForceAddQuestionError,
+			forceCreateEventError:      opts.ForceCreateEventError,
+			forceGetEventError:         opts.ForceGetEventError,
+			forceGetEventsError:        opts.ForceGetEventsError,
+			forceGetQuestionError:      opts.ForceGetQuestionError,
+			forceAddQuestionError:      opts.ForceAddQuestionError,
+			forceCanUserAnswerQuestion: opts.ForceCanUserAnswerQuestion,
 		},
 		Feedback: &TestFeedbackService{
 			forceCreateError:              opts.ForceCreateFeedbackError,
