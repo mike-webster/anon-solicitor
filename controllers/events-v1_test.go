@@ -56,6 +56,10 @@ func setupTestRouter(deps *app.AnonDependencies, useAuth bool) *gin.Engine {
 		v1Feedback.POST("/events/:id/feedback/absent", postAbsentFeedbackV1)
 	}
 
+	v1Question := r.Group("/v1")
+	{
+		v1Question.POST("/questions/:eventid", postQuestionV1)
+	}
 	// TODO: Catch all 404s
 	// r.NoRoute(func(c *gin.Context) {
 	// 	c.JSON(http.StatusOK, gin.H{"test": "test"})
