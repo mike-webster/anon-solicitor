@@ -268,6 +268,7 @@ func TestPostEventV1(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, req.Code, req.Body.String())
 
 		t.Run("ExpectedError", func(t *testing.T) {
+			assert.NotEqual(t, http.StatusOK, req.Code)
 			assert.Equal(t, true, strings.Contains(req.Body.String(), "couldnt find newly created event - id:"), req.Body.String())
 		})
 	})

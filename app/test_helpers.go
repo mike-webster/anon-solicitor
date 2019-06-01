@@ -6,6 +6,7 @@ import (
 )
 
 type TestServiceOptions struct {
+	ForceAddQuestionError         bool
 	ForceGetEventError            bool
 	ForceGetEventsError           bool
 	ForceCreateEventError         bool
@@ -21,12 +22,6 @@ type TestEventService struct {
 	forceCreateEventError bool
 	forceAddQuestionError bool
 	Event                 Event
-}
-
-func (tes *TestEventService) setNoErrors() {
-	tes.forceGetEventError = false
-	tes.forceCreateEventError = false
-	tes.forceGetEventsError = false
 }
 
 type TestDeliveryService struct {
