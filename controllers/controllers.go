@@ -91,6 +91,11 @@ func setupRouter(ctx context.Context, db *sqlx.DB) *gin.Engine {
 		v1Question.POST("/questions/:eventid", postQuestionV1)
 	}
 
+	v1Answer := r.Group("/v1")
+	{
+		v1Answer.POST("/answers/:eventid/:questionid", postQuestionAnswerV1)
+	}
+
 	// TODO: Catch all 404s
 	// r.NoRoute(func(c *gin.Context) {
 	// 	c.JSON(http.StatusOK, gin.H{"test": "test"})

@@ -16,10 +16,13 @@ type Event struct {
 }
 
 type EventService interface {
+	GetQuestion(int64) *Question
 	GetEvent(int64) *Event
 	GetEvents() (*[]Event, error)
+	CanUserAnswerQuestion(int64, string) bool
 	CreateEvent(*Event) error
 	AddQuestion(*Question) error
+	AddAnswer(*Answer) error
 }
 
 // EventPostParams represents the information about an Event that a user can create.

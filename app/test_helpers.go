@@ -7,21 +7,16 @@ import (
 
 type TestServiceOptions struct {
 	ForceAddQuestionError         bool
-	ForceGetEventError            bool
-	ForceGetEventsError           bool
+	ForceAddAnswerError           bool
+	ForceCanUserAnswerQuestion    bool
 	ForceCreateEventError         bool
 	ForceCreateFeedbackError      bool
+	ForceGetEventError            bool
+	ForceGetEventsError           bool
+	ForceGetQuestionError         bool
 	ForceGetFeedbackByTokError    bool
-	ForceMarkFeedbackAbsentError  bool
 	ForceGetFeedbackByTokNotFound bool
-}
-
-type TestEventService struct {
-	forceGetEventError    bool
-	forceGetEventsError   bool
-	forceCreateEventError bool
-	forceAddQuestionError bool
-	Event                 Event
+	ForceMarkFeedbackAbsentError  bool
 }
 
 type TestDeliveryService struct {
@@ -79,6 +74,19 @@ func (tfs *TestFeedbackService) MarkFeedbackAbsent(*Feedback) error {
 	return nil
 }
 
+type TestEventService struct {
+	forceGetEventError         bool
+	forceGetEventsError        bool
+	forceGetQuestionError      bool
+	forceCreateEventError      bool
+	forceCanUserAnswerQuestion bool
+	forceAddQuestionError      bool
+	forceAddAnswerError        bool
+	Event                      Event
+	Question                   Question
+	Answer                     Answer
+}
+
 func (tes *TestEventService) GetEvent(ID int64) *Event {
 	if tes.forceGetEventError {
 		return nil
@@ -105,6 +113,26 @@ func (tes *TestEventService) CreateEvent(*Event) error {
 
 func (tes *TestEventService) AddQuestion(*Question) error {
 	if tes.forceAddQuestionError {
+		return errors.New("forced test error")
+	}
+
+	return nil
+}
+
+func (tes *TestEventService) GetQuestion(ID int64) *Question {
+	if tes.forceGetQuestionError {
+		return nil
+	}
+
+	return &tes.Question
+}
+
+func (tes *TestEventService) CanUserAnswerQuestion(ID int64, tok string) bool {
+	return tes.forceCanUserAnswerQuestion
+}
+
+func (tes *TestEventService) AddAnswer(*Answer) error {
+	if tes.forceAddAnswerError {
 		return errors.New("forced test error")
 	}
 

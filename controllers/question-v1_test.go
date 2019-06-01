@@ -47,8 +47,8 @@ func TestPostQuestion(t *testing.T) {
 		}
 		deps := app.MockSearchDependencies(opts)
 		r := setupTestRouter(deps, true)
-		headers["token"] = getTestTok(&map[string]interface{}{"role": RoleOwner, "eid": 10000})
-		req := performRequest(r, "POST", "/v1/questions/10000", nil, headers)
+		headers["token"] = getTestTok(&map[string]interface{}{"role": RoleOwner, "eid": 10000, "qid": 1})
+		req := performRequest(r, "POST", "/v1/answers/10000/1", nil, headers)
 		assert.Equal(t, http.StatusNotFound, req.Code)
 	})
 	t.Run("ValidationErrors", func(t *testing.T) {
@@ -150,5 +150,155 @@ func TestPostQuestion(t *testing.T) {
 		headers["token"] = getTestTok(&map[string]interface{}{"role": RoleOwner, "eid": 10000})
 		req := performRequest(r, "POST", "/v1/questions/10000", &bytes, headers)
 		assert.Equal(t, http.StatusOK, req.Code, req.Body)
+	})
+}
+
+func TestPostAnswer(t *testing.T) {
+	t.Run("DependenciesError", func(t *testing.T) {
+		//TODO
+	})
+	t.Run("NoToken", func(t *testing.T) {
+		headers := getTestHeaders()
+		opts := app.TestServiceOptions{}
+		deps := app.MockSearchDependencies(opts)
+		r := setupTestRouter(deps, false)
+		headers["token"] = getTestTok(nil)
+		req := performRequest(r, "POST", "/v1/answers/1/1", nil, headers)
+		assert.Equal(t, http.StatusUnauthorized, req.Code)
+	})
+	t.Run("RoleNotPermitted", func(t *testing.T) {
+		headers := getTestHeaders()
+		opts := app.TestServiceOptions{}
+		deps := app.MockSearchDependencies(opts)
+		r := setupTestRouter(deps, false)
+		headers["token"] = getTestTok(&map[string]interface{}{"role": "notARealRole"})
+		req := performRequest(r, "POST", "/v1/answers/1/1", nil, headers)
+		assert.Equal(t, http.StatusUnauthorized, req.Code)
+	})
+	t.Run("MismatchedEventIDs", func(t *testing.T) {
+		headers := getTestHeaders()
+		opts := app.TestServiceOptions{}
+		deps := app.MockSearchDependencies(opts)
+		r := setupTestRouter(deps, false)
+		headers["token"] = getTestTok(&map[string]interface{}{"role": RoleOwner, "eid": 2})
+		req := performRequest(r, "POST", "/v1/answers/1/1", nil, headers)
+		assert.Equal(t, http.StatusUnauthorized, req.Code)
+	})
+	t.Run("EventNotFound", func(t *testing.T) {
+		headers := getTestHeaders()
+		opts := app.TestServiceOptions{
+			ForceGetEventError: true,
+		}
+		deps := app.MockSearchDependencies(opts)
+		r := setupTestRouter(deps, true)
+		headers["token"] = getTestTok(&map[string]interface{}{"role": RoleOwner, "eid": 10000})
+		req := performRequest(r, "POST", "/v1/answers/10000/1", nil, headers)
+		assert.Equal(t, http.StatusNotFound, req.Code)
+	})
+	t.Run("MismatchedQuestionIDs", func(t *testing.T) {
+		headers := getTestHeaders()
+		opts := app.TestServiceOptions{}
+		deps := app.MockSearchDependencies(opts)
+		r := setupTestRouter(deps, false)
+		headers["token"] = getTestTok(&map[string]interface{}{"role": RoleOwner, "eid": 1, "qid": 2})
+		req := performRequest(r, "POST", "/v1/answers/1/1", nil, headers)
+		assert.Equal(t, http.StatusUnauthorized, req.Code)
+	})
+	t.Run("QuestionNotFound", func(t *testing.T) {
+		headers := getTestHeaders()
+		opts := app.TestServiceOptions{
+			ForceGetQuestionError: true,
+		}
+		deps := app.MockSearchDependencies(opts)
+		r := setupTestRouter(deps, true)
+		headers["token"] = getTestTok(&map[string]interface{}{"role": RoleOwner, "eid": 1, "qid": 1})
+		req := performRequest(r, "POST", "/v1/answers/1/1", nil, headers)
+		assert.Equal(t, http.StatusNotFound, req.Code)
+	})
+	t.Run("UserCantAnswerQuestion", func(t *testing.T) {
+		headers := getTestHeaders()
+		opts := app.TestServiceOptions{
+			ForceCanUserAnswerQuestion: false,
+		}
+		deps := app.MockSearchDependencies(opts)
+		r := setupTestRouter(deps, true)
+		headers["token"] = getTestTok(&map[string]interface{}{"role": RoleOwner, "eid": 1, "qid": 1})
+		req := performRequest(r, "POST", "/v1/answers/1/1", nil, headers)
+		assert.Equal(t, http.StatusForbidden, req.Code)
+	})
+	t.Run("ValidationErrors", func(t *testing.T) {
+		t.Run("NoContent", func(t *testing.T) {
+			headers := getTestHeaders()
+			opts := app.TestServiceOptions{
+				ForceCanUserAnswerQuestion: true,
+			}
+			answer := app.AnswerPostParams{}
+			bytes, _ := json.Marshal(answer)
+			deps := app.MockSearchDependencies(opts)
+			r := setupTestRouter(deps, true)
+			headers["token"] = getTestTok(&map[string]interface{}{"role": RoleOwner, "eid": 1, "qid": 1})
+			req := performRequest(r, "POST", "/v1/answers/1/1", &bytes, headers)
+			assert.Equal(t, http.StatusBadRequest, req.Code)
+		})
+		t.Run("ContentTooLong", func(t *testing.T) {
+			headers := getTestHeaders()
+			opts := app.TestServiceOptions{
+				ForceCanUserAnswerQuestion: true,
+			}
+			answer := app.AnswerPostParams{}
+			for i := 0; i < 5001; i++ {
+				answer.Content += "a"
+			}
+			bytes, _ := json.Marshal(answer)
+			deps := app.MockSearchDependencies(opts)
+			r := setupTestRouter(deps, true)
+			headers["token"] = getTestTok(&map[string]interface{}{"role": RoleOwner, "eid": 1, "qid": 1})
+			req := performRequest(r, "POST", "/v1/answers/1/1", &bytes, headers)
+			assert.Equal(t, http.StatusBadRequest, req.Code)
+		})
+	})
+	t.Run("CantSaveAnswer", func(t *testing.T) {
+		headers := getTestHeaders()
+		opts := app.TestServiceOptions{
+			ForceCanUserAnswerQuestion: true,
+			ForceAddAnswerError:        true,
+		}
+		deps := app.MockSearchDependencies(opts)
+		r := setupTestRouter(deps, true)
+		headers["token"] = getTestTok(&map[string]interface{}{"role": RoleOwner, "eid": 1, "qid": 1})
+		req := performRequest(r, "POST", "/v1/answers/1/1", nil, headers)
+		assert.Equal(t, http.StatusInternalServerError, req.Code)
+	})
+	t.Run("Success", func(t *testing.T) {
+		t.Run("Owner", func(t *testing.T) {
+			headers := getTestHeaders()
+			opts := app.TestServiceOptions{
+				ForceCanUserAnswerQuestion: true,
+			}
+			answer := app.AnswerPostParams{
+				Content: "test content",
+			}
+			bytes, _ := json.Marshal(answer)
+			deps := app.MockSearchDependencies(opts)
+			r := setupTestRouter(deps, true)
+			headers["token"] = getTestTok(&map[string]interface{}{"role": RoleOwner, "eid": 1, "qid": 1})
+			req := performRequest(r, "POST", "/v1/answers/1/1", &bytes, headers)
+			assert.Equal(t, http.StatusOK, req.Code)
+		})
+		t.Run("Audience", func(t *testing.T) {
+			headers := getTestHeaders()
+			opts := app.TestServiceOptions{
+				ForceCanUserAnswerQuestion: true,
+			}
+			answer := app.AnswerPostParams{
+				Content: "test content",
+			}
+			bytes, _ := json.Marshal(answer)
+			deps := app.MockSearchDependencies(opts)
+			r := setupTestRouter(deps, true)
+			headers["token"] = getTestTok(&map[string]interface{}{"role": RoleAudience, "eid": 1, "qid": 1})
+			req := performRequest(r, "POST", "/v1/answers/1/1", &bytes, headers)
+			assert.Equal(t, http.StatusOK, req.Code)
+		})
 	})
 }
