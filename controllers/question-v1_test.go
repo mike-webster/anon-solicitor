@@ -152,3 +152,22 @@ func TestPostQuestion(t *testing.T) {
 		assert.Equal(t, http.StatusOK, req.Code, req.Body)
 	})
 }
+
+func TestPostAnswer(t *testing.T) {
+	t.Run("DependenciesError", func(t *testing.T) {
+		//TODO
+	})
+	t.Run("NoToken", func(t *testing.T) {})
+	t.Run("RoleNotPermitted", func(t *testing.T) {})
+	t.Run("MismatchedEventIDs", func(t *testing.T) {})
+	t.Run("EventNotFound", func(t *testing.T) {})
+	t.Run("MismatchedQuestionIDs", func(t *testing.T) {})
+	t.Run("QuestionNotFound", func(t *testing.T) {})
+	t.Run("UserCantAnswerQuestion", func(t *testing.T) {})
+	t.Run("ValidationErrors", func(t *testing.T) {
+		t.Run("NoContent", func(t *testing.T) {})
+		t.Run("ContentTooLong", func(t *testing.T) {})
+	})
+	t.Run("CantSaveAnswer", func(t *testing.T) {})
+
+}
