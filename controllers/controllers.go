@@ -88,7 +88,7 @@ func setupRouter(ctx context.Context, db *sqlx.DB) *gin.Engine {
 
 	v1Question := r.Group("/v1")
 	{
-		v1Question.POST("/questions/:eventid/:token", postQuestionV1)
+		v1Question.POST("/questions/:eventid", postQuestionV1)
 	}
 
 	// TODO: Catch all 404s
