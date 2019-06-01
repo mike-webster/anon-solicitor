@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"errors"
 	"log"
 	"net/http"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -32,16 +34,20 @@ func postQuestionV1(c *gin.Context) {
 	if payload["role"] != RoleOwner {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusForbidden)
+		log.Println("~Forbidden #1")
 		setError(c, err, ErrNotAllowed)
 
 		return
 	}
 
 	eventID, _ := strconv.Atoi(c.Param("eventid"))
-	if payload["eid"] != eventID {
+	log.Println("eid: ", payload["eid"], " - ", reflect.TypeOf(payload["eid"]))
+	eid, _ := payload["eid"].(float64)
+	if int64(eid) != int64(eventID) {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusForbidden)
-		setError(c, err, "error_mismatched_ids")
+		log.Println("~Forbidden #2 : ", eid, " != ", eventID)
+		setError(c, errors.New("user trying to manipulate feedback for unintended event"), "error_mismatched_ids")
 
 		return
 	}
@@ -50,11 +56,10 @@ func postQuestionV1(c *gin.Context) {
 	if event == nil {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusNotFound)
-		setError(c, err, ErrRetrievingDomainObject)
+		setError(c, errors.New("couldnt find event"), ErrRetrievingDomainObject)
 
 		return
 	}
-
 	postQuestion := domain.QuestionPostParams{}
 	err = c.Bind(&postQuestion)
 	if err != nil {
