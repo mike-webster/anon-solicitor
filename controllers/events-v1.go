@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -34,7 +35,7 @@ const (
 )
 
 func getEventsV1(c *gin.Context) {
-	es, _, _, err := getDependencies(c)
+	es, _, _, err := GetDependencies(c)
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		setError(c, err, ErrRetrievingDependencies)
@@ -54,7 +55,7 @@ func getEventsV1(c *gin.Context) {
 }
 
 func getEventV1(c *gin.Context) {
-	es, _, _, err := getDependencies(c)
+	es, _, _, err := GetDependencies(c)
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		setError(c, err, ErrRetrievingDependencies)
@@ -85,7 +86,7 @@ func getEventV1(c *gin.Context) {
 
 func postEventsV1(c *gin.Context) {
 	cfg := env.Config()
-	es, fs, em, err := getDependencies(c)
+	es, fs, em, err := GetDependencies(c)
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		setError(c, err, ErrRetrievingDependencies)
@@ -200,7 +201,7 @@ func postEventsV1(c *gin.Context) {
 }
 
 // getEventService retrieves the expected EventService with the give key from the gin context
-func getEventService(ctx *gin.Context, key interface{}) (domain.EventService, error) {
+func getEventService(ctx context.Context, key interface{}) (domain.EventService, error) {
 	if ctx == nil {
 		return nil, errors.New("provide a gin context in order to retrieve a value")
 	}

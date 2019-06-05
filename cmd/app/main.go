@@ -8,7 +8,9 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/mike-webster/anon-solicitor/app"
 	"github.com/mike-webster/anon-solicitor/controllers"
+	"github.com/mike-webster/anon-solicitor/data"
 	"github.com/mike-webster/anon-solicitor/env"
 )
 
@@ -21,6 +23,23 @@ func main() {
 	ctx := moveFlagsToContext()
 	cfg := env.Config()
 	r := controllers.GetRouter(ctx)
+
+	createTables, err := app.Bool(ctx, "CreateTables")
+	if err != nil {
+		panic(fmt.Sprintf("couldnt determine if need to create tables, err: %v", err))
+	}
+
+	if *createTables {
+		db, err := app.DB(ctx)
+		if err != nil || db == nil {
+			panic(fmt.Sprintf("need to create tables but couldnt parse db; err: %v", err))
+		}
+		defer db.Close()
+		err = data.CreateTables(ctx, db)
+		if err != nil {
+			panic(fmt.Sprintf("error creating tables; err: %v", err))
+		}
+	}
 
 	r.Run(fmt.Sprintf("%v:%v", cfg.Host, cfg.Port))
 }

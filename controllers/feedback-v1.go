@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -17,7 +18,7 @@ import (
 var feedbackServiceKey domain.ContextKey = "FeedbackService"
 
 func postAbsentFeedbackV1(c *gin.Context) {
-	_, fs, _, err := getDependencies(c)
+	_, fs, _, err := GetDependencies(c)
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusInternalServerError)
@@ -69,7 +70,7 @@ func postAbsentFeedbackV1(c *gin.Context) {
 }
 
 func getFeedbackV1(c *gin.Context) {
-	es, fs, _, err := getDependencies(c)
+	es, fs, _, err := GetDependencies(c)
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusInternalServerError)
@@ -137,7 +138,7 @@ func getFeedbackV1(c *gin.Context) {
 }
 
 // Feedback retrieves the expected EventService with the give key from the gin context
-func getFeedbackService(ctx *gin.Context, key interface{}) (domain.FeedbackService, error) {
+func getFeedbackService(ctx context.Context, key interface{}) (domain.FeedbackService, error) {
 	if ctx == nil {
 		return nil, errors.New("provide a gin context in order to retrieve a value")
 	}
