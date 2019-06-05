@@ -5,22 +5,11 @@ import (
 
 	"github.com/bmizerany/assert"
 	gin "github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 )
 
 func TestDB(t *testing.T) {
-	t.Run("NilContextReturnsError", func(t *testing.T) {
-		_, err := DB(nil)
-		assert.NotEqual(t, nil, err)
-	})
-
-	t.Run("InvalidValueForKey", func(t *testing.T) {
-		ctx := gin.Context{}
-		ctx.Set("DB", "invalid")
-		_, err := DB(&ctx)
-		assert.NotEqual(t, nil, err)
-	})
-
 	t.Run("Valid", func(t *testing.T) {
 		ctx := gin.Context{}
 		db := sqlx.DB{}
