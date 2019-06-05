@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{ .title }}</title>
+    </head>
+    <body>
+        <form style="width: 90%; padding:5%;" action="/testsetup" method="POST">
+            <input type="hidden" name="eventid" value="{{ .form.EventID }}">
+            <p>Question:&nbsp;<input type="text" readonly name="content" value="{{ .form.Content }}" style="width:50%;min-width:50px;"></p>
+            {{ if (gt .form.AnswerCount 0) }}
+                <p>has answers</p>
+            {{ else }}
+                <p>no answers</p>
+            {{ end }}
+            <input type="submit" value="SET">
+        </form>
+    </body>
+</html>
