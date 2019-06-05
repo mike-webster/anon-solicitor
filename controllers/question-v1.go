@@ -13,7 +13,7 @@ import (
 )
 
 func postQuestionV1(c *gin.Context) {
-	es, _, _, err := getDependencies(c)
+	es, _, _, err := GetDependencies(c)
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusInternalServerError)
@@ -95,7 +95,7 @@ func postQuestionV1(c *gin.Context) {
 }
 
 func postQuestionAnswerV1(c *gin.Context) {
-	es, _, _, err := getDependencies(c)
+	es, _, _, err := GetDependencies(c)
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusInternalServerError)
