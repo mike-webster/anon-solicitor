@@ -2,11 +2,14 @@
     <head>
         <title>Test Setup</title>
     </head>
-    <body>
+    <body style="font-family:Arial, Helvetica, sans-serif; font-size:large;">
         <div style="width:90%; display: inline-block; padding: 5%">
-            <div style="width: 90%; padding:5%;">
-                <span><p>Token:</p><input type="text" value="{{ .tok }}"></span>
-            </div>
+            <form style="width: 90%; padding:5%;" action="/testsetup" method="POST">
+                <p>Token:&nbsp;<input type="text" name="token" value="{{ .form.Token }}" style="width:50%;min-width:50px;"></p>
+                <p>Role:&nbsp;<input type="text" name="role" value="{{ .form.Role }}" style="min-width:50px;"></p>
+                <p>Event ID:&nbsp;<input type="text" name="eventid" value="{{ .form.EventID }}"></p>
+                <input type="submit" value="SET">
+            </form>
         </div>
     </body>
 </html>
