@@ -5,9 +5,7 @@ import "time"
 type Answer struct {
 	ID         int64
 	QuestionID int64
-	EventID    int64
 	Content    string
-	Token      string
 	CreatedAt  time.Time
 }
 

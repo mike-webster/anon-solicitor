@@ -4,7 +4,6 @@ package app
 type Feedback struct {
 	ID      int64
 	Tok     string
-	Content string
 	EventID int64
 }
 

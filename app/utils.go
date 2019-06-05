@@ -1,11 +1,13 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
 	gin "github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+	"github.com/mike-webster/anon-solicitor/env"
 )
 
 // ContextKey is meant to be used with contexts
@@ -16,21 +18,19 @@ func (c ContextKey) String() string {
 }
 
 // DB retrieves the sqlx DB from the gin context
-func DB(ctx *gin.Context) (*sqlx.DB, error) {
-	if ctx == nil {
-		return nil, errors.New("provide a gin context in order to retrieve the database")
-	}
+func DB(ctx context.Context) (*sqlx.DB, error) {
+	cfg := env.Config()
 
-	db, ok := ctx.Value("DB").(*sqlx.DB)
-	if !ok {
-		return nil, errors.New("couldnt parse db from context")
+	db, err := sqlx.Open("mysql", cfg.ConnectionString)
+	if err != nil {
+		panic(err)
 	}
 
 	return db, nil
 }
 
 // Bool retrieves the expected bool value with the given key from the gin context
-func Bool(ctx *gin.Context, key interface{}) (*bool, error) {
+func Bool(ctx context.Context, key interface{}) (*bool, error) {
 	if ctx == nil {
 		return nil, errors.New("provide a gin context in order to retrieve a value")
 	}

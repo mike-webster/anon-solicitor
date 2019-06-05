@@ -34,9 +34,7 @@ const (
 
 // GetRouter will attempt to run the gin router
 func GetRouter(ctx context.Context) *gin.Engine {
-	cfg := env.Config()
-
-	db, err := sqlx.Open("mysql", cfg.ConnectionString)
+	db, err := app.DB(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -108,7 +106,7 @@ func setupRouter(ctx context.Context, db *sqlx.DB) *gin.Engine {
 	return r
 }
 
-func getDependencies(ctx *gin.Context) (domain.EventService, domain.FeedbackService, domain.DeliveryService, error) {
+func GetDependencies(ctx context.Context) (domain.EventService, domain.FeedbackService, domain.DeliveryService, error) {
 	errs := ""
 
 	es, err := getEventService(ctx, eventServiceKey.String())
@@ -144,7 +142,7 @@ func setError(c *gin.Context, err error, desc string) {
 }
 
 // getEmailService retrieves the expected EmailService with the give key from the gin context
-func getEmailService(ctx *gin.Context, key interface{}) (domain.DeliveryService, error) {
+func getEmailService(ctx context.Context, key interface{}) (domain.DeliveryService, error) {
 	if ctx == nil {
 		return nil, errors.New("provide a gin context in order to retrieve a value")
 	}

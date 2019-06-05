@@ -230,11 +230,9 @@ func (es *EventService) AddAnswer(a *domain.Answer) error {
 	createdAt := time.Now().UTC()
 	a.CreatedAt = createdAt
 
-	res, err := es.Conn().Exec("INSERT INTO answers (question_id, event_id, content, token, created_at) VALUES (?,?,?,?,?)",
+	res, err := es.Conn().Exec("INSERT INTO answers (question_id, content, created_at) VALUES (?,?,?,?,?)",
 		a.QuestionID,
-		a.EventID,
 		a.Content,
-		a.Token,
 		a.CreatedAt,
 	)
 	if err != nil {
@@ -295,8 +293,8 @@ func (fs FeedbackService) CreateFeedback(feedback *domain.Feedback) error {
 		return errors.New("must pass event in order to create")
 	}
 
-	res, err := fs.DB.Exec("INSERT INTO feedback (content, tok, event_id) VALUES (?,?,?)",
-		feedback.Content, feedback.Tok, feedback.EventID)
+	res, err := fs.DB.Exec("INSERT INTO feedback  tok, event_id) VALUES (?,?)",
+		feedback.Tok, feedback.EventID)
 	if err != nil {
 		return err
 	}

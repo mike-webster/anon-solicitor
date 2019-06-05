@@ -13,7 +13,7 @@ import (
 )
 
 func postQuestionV1(c *gin.Context) {
-	es, _, _, err := getDependencies(c)
+	es, _, _, err := GetDependencies(c)
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusInternalServerError)
@@ -95,7 +95,7 @@ func postQuestionV1(c *gin.Context) {
 }
 
 func postQuestionAnswerV1(c *gin.Context) {
-	es, _, _, err := getDependencies(c)
+	es, _, _, err := GetDependencies(c)
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusInternalServerError)
@@ -185,9 +185,8 @@ func postQuestionAnswerV1(c *gin.Context) {
 	log.Printf("posted answer: %v", postAnswer)
 
 	newAnswer := domain.Answer{
-		EventID: event.ID,
-		Content: postAnswer.Content,
-		Token:   token,
+		Content:    postAnswer.Content,
+		QuestionID: question.ID,
 	}
 
 	err = es.AddAnswer(&newAnswer)
