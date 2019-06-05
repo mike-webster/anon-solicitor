@@ -94,6 +94,26 @@ func postQuestionV1(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"msg": "success"})
 }
 
+func getQuestionV1(c *gin.Context) {
+	type tempForm struct {
+		EventID     int64    `json:"eventID" form:"eventid"`
+		QuestionID  int64    `json:"questionID" form:"questionID"`
+		Content     string   `json:"content" form:"content"`
+		Answers     []string `json:"answers" form:"answers"`
+		AnswerCount int64    `json:"answercount" form:"answercount"`
+	}
+
+	form := tempForm{
+		EventID:    10000,
+		QuestionID: 5432,
+		Content:    "test content",
+	}
+
+	c.HTML(http.StatusOK, "question.html", gin.H{
+		"form": form,
+	})
+}
+
 func postQuestionAnswerV1(c *gin.Context) {
 	es, _, _, err := getDependencies(c)
 	if err != nil {
