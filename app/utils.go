@@ -30,7 +30,7 @@ func DB(ctx context.Context) (*sqlx.DB, error) {
 }
 
 // Bool retrieves the expected bool value with the given key from the gin context
-func Bool(ctx *gin.Context, key interface{}) (*bool, error) {
+func Bool(ctx context.Context, key interface{}) (*bool, error) {
 	if ctx == nil {
 		return nil, errors.New("provide a gin context in order to retrieve a value")
 	}
