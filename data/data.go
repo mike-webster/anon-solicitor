@@ -46,7 +46,8 @@ func CreateTables(ctx context.Context, db *sqlx.DB) error {
 		tok NVARCHAR(5000) NOT NULL,
 		event_id INT NOT NULL,
 		absent BOOLEAN NOT NULL DEFAULT FALSE,
-		PRIMARY KEY(id)
+		PRIMARY KEY(id),
+		FOREIGN KEY (event_id) REFERENCES events(id)
 	);`
 	err = createTable(ctx, db, "feedback", feedbackSchema)
 	if err != nil {
@@ -57,14 +58,45 @@ func CreateTables(ctx context.Context, db *sqlx.DB) error {
 	questionSchema := `CREATE TABLE IF NOT EXISTS questions (
 		id INT AUTO_INCREMENT,
 		event_id INT NOT NULL,
-		content NVARCHAR(5000) NOT NULL,
-		answers NVARCHAR(5000) NOT NULL,
+		title NVARCHAR(5000) NOT NULL,
+		content NVARCHAR(5000) NULL,
+		answers NVARCHAR(5000) NULL,
 		created_at DATETIME NOT NULL,
 		updated_at DATETIME,
 		deleted_at DATETIME,
-		PRIMARY KEY (id)
+		PRIMARY KEY (id),
+		FOREIGN KEY (event_id) REFERENCES events(id)
 	);`
 	err = createTable(ctx, db, "questions", questionSchema)
+	if err != nil {
+		return err
+	}
+
+	// answers
+	answerSchema := `CREATE TABLE IF NOT EXISTS answers (
+		id INT AUTO_INCREMENT,
+		question_id INT NOT NULL,
+		content NVARCHAR(5000) NOT NULL,
+		created_at DATETIME NOT NULL,
+		PRIMARY KEY (id),
+		FOREIGN KEY (question_id) REFERENCES questions(id)
+	);`
+	err = createTable(ctx, db, "answers", answerSchema)
+	if err != nil {
+		return err
+	}
+
+	// tie answers to feedback
+	answersJoinSchema := `CREATE TABLE IF NOT EXISTS feedback_answers (
+		feedback_id INT NOT NULL,
+		question_id INT NOT NULL,
+		answer_id INT NOT NULL,
+		FOREIGN KEY (feedback_id) REFERENCES feedback(id),
+		FOREIGN KEY (question_id) REFERENCES questions(id),
+		FOREIGN KEY (answer_id) REFERENCES answers(id),
+		UNIQUE(feedback_id, question_id, answer_id)
+	);`
+	err = createTable(ctx, db, "feedback_answers", answersJoinSchema)
 	if err != nil {
 		return err
 	}

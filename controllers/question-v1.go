@@ -185,9 +185,8 @@ func postQuestionAnswerV1(c *gin.Context) {
 	log.Printf("posted answer: %v", postAnswer)
 
 	newAnswer := domain.Answer{
-		EventID: event.ID,
-		Content: postAnswer.Content,
-		Token:   token,
+		Content:    postAnswer.Content,
+		QuestionID: question.ID,
 	}
 
 	err = es.AddAnswer(&newAnswer)

@@ -34,9 +34,7 @@ const (
 
 // GetRouter will attempt to run the gin router
 func GetRouter(ctx context.Context) *gin.Engine {
-	cfg := env.Config()
-
-	db, err := sqlx.Open("mysql", cfg.ConnectionString)
+	db, err := app.DB(ctx)
 	if err != nil {
 		panic(err)
 	}
