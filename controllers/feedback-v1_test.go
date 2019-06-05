@@ -18,13 +18,19 @@ var cfg = env.Config()
 
 func getTestTok(inPayload *map[string]interface{}) string {
 	id, _ := uuid.NewV4()
+	foundTok := false
 	payload := map[string]interface{}{}
 	if inPayload != nil {
 		for k, v := range *inPayload {
 			payload[k] = v
+			if k == "tok" {
+				foundTok = true
+			}
 		}
 	}
-	payload["tok"] = id.String()
+	if !foundTok {
+		payload["tok"] = id.String()
+	}
 	payload["exp"] = time.Now().UTC().Add(30 * time.Minute).Unix()
 	payload["iss"] = "anon-test"
 	return tokens.GetJWT(cfg.Secret, payload)

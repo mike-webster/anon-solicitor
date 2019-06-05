@@ -33,6 +33,10 @@ func setupTestRouter(deps *app.AnonDependencies, useAuth bool) *gin.Engine {
 		c.Set("EmailService", deps.Delivery)
 		c.Next()
 	})
+
+	r.GET("/testsetup", getTestSetup)
+	r.POST("/testsetup", postTestSetup)
+
 	r.Use(setStatus())
 
 	v1Events := r.Group("/v1")

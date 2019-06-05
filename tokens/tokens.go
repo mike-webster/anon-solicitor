@@ -38,7 +38,7 @@ func CheckToken(token string, secret string) (map[string]interface{}, error) {
 	sections := strings.Split(token, ".")
 	if len(sections) != 3 {
 		// not correct format
-		return map[string]interface{}{}, errors.New("Invalid Format")
+		return map[string]interface{}{}, errors.New(fmt.Sprint("Invalid Format: ", token))
 	}
 
 	checkString := fmt.Sprintf("%v.%v", sections[0], sections[1])

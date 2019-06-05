@@ -62,6 +62,10 @@ func setupRouter(ctx context.Context, db *sqlx.DB) *gin.Engine {
 	if env.Target() != "test" {
 		r.LoadHTMLGlob("templates/*")
 	}
+	if env.Target() == "development" {
+		r.GET("/testsetup", getTestSetup)
+		r.POST("/testsetup", postTestSetup)
+	}
 
 	r.Use(setDependencies(ctx, db))
 	r.Use(setStatus())

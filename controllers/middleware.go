@@ -44,15 +44,47 @@ func getToken() gin.HandlerFunc {
 		cfg := env.Config()
 		token := c.Request.Header.Get("token")
 		if len(token) < 1 {
-			log.Println("token not found in header, checking query string")
+			log.Println("token not found in header, checking cookies")
+			token, _ := c.Cookie("anonauth")
+			if len(token) > 1 {
+				log.Println("token found in cookie")
 
-			token := c.Param("token")
+				tok, err := tokens.CheckToken(token, env.Config().Secret)
+				if err != nil {
+					log.Println("token invalid - 401 - ", tok, " - ", err)
+					c.AbortWithError(http.StatusUnauthorized, err)
+
+					return
+				}
+
+				log.Println(fmt.Sprint("tok: ", token))
+				c.Set("tok", token)
+				c.Next()
+
+				return
+			}
+
+			log.Println("token not found in header, checking query string")
+			token = c.Param("token")
 			if len(token) < 1 {
 				log.Println("token not found - 401")
 				c.AbortWithStatus(http.StatusUnauthorized)
 
 				return
 			}
+
+			if len(token) < 1 {
+				log.Println("no tok in jwt - 401")
+				c.AbortWithError(http.StatusUnauthorized, errors.New("couldn't find token"))
+
+				return
+			}
+
+			log.Println(fmt.Sprint("tok: ", token))
+			c.Set("tok", token)
+			c.Next()
+
+			return
 		}
 
 		tok, err := tokens.CheckToken(token, cfg.Secret)
