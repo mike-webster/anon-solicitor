@@ -84,7 +84,6 @@ function makeRequest(action, path, body) {
 
 function answerQuestion(event) {
     console.log("click");
-    // TODO: if the error banner is visible, return - user should refresh page.
     route = "/v1/answers/{eid}/{qid}"
 
     e = event || window.event;

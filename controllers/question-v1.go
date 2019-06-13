@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"reflect"
@@ -93,22 +94,60 @@ func postQuestionV1(c *gin.Context) {
 }
 
 func getQuestionV1(c *gin.Context) {
-	type tempForm struct {
-		EventID     int64    `json:"eventID" form:"eventid"`
-		QuestionID  int64    `json:"questionID" form:"questionID"`
-		Content     string   `json:"content" form:"content"`
-		Answers     []string `json:"answers" form:"answers"`
-		AnswerCount int64    `json:"answercount" form:"answercount"`
+	es, fs, _, err := GetDependencies(c)
+	if err != nil {
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusInternalServerError)
+		setError(c, err, ErrRetrievingDependencies)
+
+		return
 	}
 
-	form := tempForm{
-		EventID:    10000,
-		QuestionID: 5432,
-		Content:    "test content",
+	tokPayload, err := domain.MapStringInterface(c, "tok")
+	if err != nil {
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusUnauthorized)
+		setError(c, err, ErrBadToken)
+
+		return
+	}
+
+	eid, _ := tokPayload["eid"].(float64)
+	event := es.GetEvent(int64(eid))
+	if event == nil {
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusNotFound)
+		setError(c, err, "couldnt find event")
+
+		return
+	}
+
+	tok, _ := tokPayload["tok"].(string)
+	questions := fs.GetQuestionsForTok(tok)
+	if questions == nil {
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusNoContent)
+		setError(c, err, "no_questions_for_tok")
+
+		return
+	}
+
+	display := []domain.QuestionDisplay{}
+	for _, q := range *questions {
+		display = append(display,
+			domain.QuestionDisplay{
+				QuestionID: q.ID,
+				EventID:    q.EventID,
+				Content:    q.Content,
+				Answers:    q.Answers(),
+			})
 	}
 
 	c.HTML(http.StatusOK, "question.html", gin.H{
-		"form": form,
+		"title":       fmt.Sprint("AnonSolicitor - ", event.Title),
+		"headline":    event.Title,
+		"description": event.Description,
+		"questions":   display,
 	})
 }
 
@@ -207,7 +246,7 @@ func postQuestionAnswerV1(c *gin.Context) {
 		QuestionID: question.ID,
 	}
 
-	err = es.AddAnswer(&newAnswer)
+	err = es.AddAnswer(&newAnswer, feedback.ID)
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusInternalServerError)
