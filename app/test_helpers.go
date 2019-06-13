@@ -46,6 +46,7 @@ type TestFeedbackService struct {
 	forceMarkFeedbackAbsentError  bool
 	forceGetQuestionsForTokError  bool
 	Feedback                      Feedback
+	Questions                     []Question
 }
 
 func (tfs *TestFeedbackService) CreateFeedback(*Feedback) error {
