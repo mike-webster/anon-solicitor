@@ -299,6 +299,35 @@ type FeedbackService struct {
 	DB *sqlx.DB
 }
 
+func (fs *FeedbackService) Conn() *sqlx.DB {
+	if fs.DB == nil {
+		log.Println("No DB connection - establishing...")
+		cfg := env.Config()
+		db, err := sqlx.Open("mysql", cfg.ConnectionString)
+		if err != nil {
+			panic(fmt.Sprint("Couldn't load database; error", err))
+		}
+		fs.DB = db
+		return fs.DB
+	}
+
+	err := fs.DB.Ping()
+	if err != nil {
+		log.Println("No DB connection - ping failed/ establishing...")
+
+		cfg := env.Config()
+		db, err := sqlx.Open("mysql", cfg.ConnectionString)
+		if err != nil {
+			panic(fmt.Sprint("Couldn't establish database connection; err: ", err))
+		}
+		fs.DB = db
+		return fs.DB
+	}
+	log.Println("DB connection - ping success!")
+
+	return fs.DB
+}
+
 func (fs FeedbackService) CreateFeedback(feedback *domain.Feedback) error {
 	if feedback == nil {
 		return errors.New("must pass event in order to create")
@@ -326,7 +355,7 @@ func (fs FeedbackService) GetFeedbackByTok(tok string) (*domain.Feedback, error)
 
 	var ret []domain.Feedback
 
-	err := fs.DB.Select(&ret, "SELECT * FROM feedback where tok = '?'", tok)
+	err := fs.Conn().Select(&ret, "SELECT * FROM feedback where tok = ?", tok)
 	if err != nil {
 		return nil, err
 	}
