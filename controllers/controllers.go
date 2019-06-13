@@ -57,6 +57,7 @@ func GetRouter(ctx context.Context) *gin.Engine {
 
 func setupRouter(ctx context.Context, db *sqlx.DB) *gin.Engine {
 	r := gin.Default()
+
 	if env.Target() != "test" {
 		r.LoadHTMLGlob("templates/*")
 	}
@@ -93,7 +94,7 @@ func setupRouter(ctx context.Context, db *sqlx.DB) *gin.Engine {
 	v1Question := r.Group("/v1")
 	{
 		v1Question.POST("/questions/:eventid", postQuestionV1)
-		v1Question.GET("/questions/:eventid/:questionid", getQuestionV1)
+		v1Question.GET("/questions/:eventid", getQuestionV1)
 	}
 
 	v1Answer := r.Group("/v1")
