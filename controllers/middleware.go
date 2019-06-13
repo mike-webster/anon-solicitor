@@ -45,11 +45,11 @@ func getToken() gin.HandlerFunc {
 		token := c.Request.Header.Get("token")
 		if len(token) < 1 {
 			log.Println("token not found in header, checking cookies")
-			token, _ := c.Cookie("anonauth")
-			if len(token) > 1 {
+			cookieToken, _ := c.Cookie("anonauth")
+			if len(cookieToken) > 1 {
 				log.Println("token found in cookie")
 
-				tok, err := tokens.CheckToken(token, env.Config().Secret)
+				tok, err := tokens.CheckToken(cookieToken, env.Config().Secret)
 				if err != nil {
 					log.Println("token invalid - 401 - ", tok, " - ", err)
 					c.AbortWithError(http.StatusUnauthorized, err)
@@ -57,8 +57,7 @@ func getToken() gin.HandlerFunc {
 					return
 				}
 
-				log.Println(fmt.Sprint("tok: ", token))
-				c.Set("tok", token)
+				c.Set("tok", tok)
 				c.Next()
 
 				return
