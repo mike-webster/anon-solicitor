@@ -202,19 +202,32 @@ func (es *EventService) CanUserAnswerQuestion(ID int64, tok string) bool {
 		return false
 	}
 
-	rows, err := es.Conn().Queryx("SELECT * FROM answers WHERE question_id = ? AND token = ?", ID, tok)
+	// this query will check to see if an answer record exists
+	// tied to the given token for the given question
+	query := `SELECT a.id, a.question_id, a.content, a.created_at
+	    FROM feedback f 
+		INNER JOIN events e 
+		ON f.event_id = e.id 
+		INNER JOIN questions q 
+		ON q.event_id = e.id 
+		INNER JOIN answers a 
+		ON q.id = a.question_id 
+		LEFT JOIN feedback_answers fa 
+		ON f.id = fa.feedback_id 
+		AND q.id = fa.question_id 
+		WHERE f.tok = ? 
+		AND q.id = ?
+		AND fa.feedback_id is null`
+
+	var ret []domain.Answer
+	err := es.Conn().Select(&ret, query, tok, ID)
 	if err != nil {
 		log.Printf("query error: %v", err)
 		return false
 	}
 
-	if rows.Next() {
-		var ret domain.Answer
-		err = rows.StructScan(&ret)
-		if err != nil {
-			log.Printf("struct scan error: %v", err)
-			return false
-		}
+	if len(ret) > 0 {
+		// if there's an answer... we can't add another
 
 		return false
 	}
