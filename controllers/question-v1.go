@@ -75,9 +75,7 @@ func postQuestionV1(c *gin.Context) {
 
 	newQuestion := domain.Question{
 		EventID:   event.ID,
-		Title:     postQuestion.Title,
 		Content:   postQuestion.Content,
-		Answers:   postQuestion.Answers,
 		CreatedAt: time.Now().UTC(),
 	}
 
