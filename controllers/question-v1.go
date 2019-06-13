@@ -79,6 +79,7 @@ func postQuestionV1(c *gin.Context) {
 		Content:   postQuestion.Content,
 		CreatedAt: time.Now().UTC(),
 	}
+	newQuestion.AddAnswers(postQuestion.Answers)
 
 	err = es.AddQuestion(&newQuestion)
 	if err != nil {
