@@ -152,7 +152,7 @@ func getQuestionV1(c *gin.Context) {
 }
 
 func postQuestionAnswerV1(c *gin.Context) {
-	es, _, _, err := GetDependencies(c)
+	es, fs, _, err := GetDependencies(c)
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusInternalServerError)
@@ -214,7 +214,7 @@ func postQuestionAnswerV1(c *gin.Context) {
 	if question == nil {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusNotFound)
-		setError(c, errors.New("couldnt find question"), ErrRetrievingDomainObject)
+		setError(c, errors.New(fmt.Sprint("couldnt find question: ", questionID)), ErrRetrievingDomainObject)
 
 		return
 	}
@@ -224,6 +224,15 @@ func postQuestionAnswerV1(c *gin.Context) {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusForbidden)
 		setError(c, errors.New("user cannot answer question"), "err_forbidden")
+
+		return
+	}
+
+	feedback, err := fs.GetFeedbackByTok(token)
+	if err != nil {
+		c.Set(controllerErrorKey, true)
+		c.Set(controllerRespStatusKey, http.StatusForbidden)
+		setError(c, fmt.Errorf("Feedback error: %v", err), "err_forbidden")
 
 		return
 	}
