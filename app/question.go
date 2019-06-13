@@ -1,6 +1,12 @@
 package app
 
-import "time"
+import (
+	"database/sql"
+	"strings"
+	"time"
+
+	mysql "github.com/go-sql-driver/mysql"
+)
 
 // Question fd
 type Question struct {
@@ -12,6 +18,25 @@ type Question struct {
 	CreatedAt time.Time      `db:"created_at"`
 	UpdatedAt mysql.NullTime `db:"updated_at"`
 	DeletedAt mysql.NullTime `db:"deleted_at"`
+}
+
+type QuestionDisplay struct {
+	QuestionID int64
+	EventID    int64 `form:"eventid"`
+	Content    string
+	Answers    []string
+	Feedback   string
+}
+
+func (q *Question) AddAnswers(answers string) {
+	q.DBAnswers = sql.NullString{String: answers}
+}
+
+func (q *Question) Answers() []string {
+	if q.DBAnswers.Valid {
+		return strings.Split(q.DBAnswers.String, ";")
+	}
+	return []string{}
 }
 
 type QuestionPostParams struct {
