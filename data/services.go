@@ -222,7 +222,7 @@ func (es *EventService) CanUserAnswerQuestion(ID int64, tok string) bool {
 	return true
 }
 
-func (es *EventService) AddAnswer(a *domain.Answer) error {
+func (es *EventService) AddAnswer(a *domain.Answer, feedbackID int64) error {
 	if a == nil {
 		return errors.New("must pass answer in order to add")
 	}
@@ -230,7 +230,7 @@ func (es *EventService) AddAnswer(a *domain.Answer) error {
 	createdAt := time.Now().UTC()
 	a.CreatedAt = createdAt
 
-	res, err := es.Conn().Exec("INSERT INTO answers (question_id, content, created_at) VALUES (?,?,?,?,?)",
+	res, err := es.Conn().Exec("INSERT INTO answers (question_id, content, created_at) VALUES (?,?,?)",
 		a.QuestionID,
 		a.Content,
 		a.CreatedAt,
@@ -249,6 +249,17 @@ func (es *EventService) AddAnswer(a *domain.Answer) error {
 	a.ID = id
 
 	log.Printf("-- assigning question id: %v", a.ID)
+
+	_, err = es.Conn().Exec("INSERT INTO feedback_answers (feedback_id, question_id, answer_id) VALUES (?,?,?)",
+		feedbackID,
+		a.QuestionID,
+		a.ID,
+	)
+	if err != nil {
+		return err
+	}
+
+	log.Println("-- newly created feedback_answer record")
 
 	return nil
 }

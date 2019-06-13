@@ -141,7 +141,7 @@ func (tes *TestEventService) CanUserAnswerQuestion(ID int64, tok string) bool {
 	return tes.forceCanUserAnswerQuestion
 }
 
-func (tes *TestEventService) AddAnswer(*Answer) error {
+func (tes *TestEventService) AddAnswer(*Answer, int64) error {
 	if tes.forceAddAnswerError {
 		return errors.New("forced test error")
 	}
