@@ -142,7 +142,7 @@ func (es *EventService) AddQuestion(q *domain.Question) error {
 
 	createdAt := time.Now().UTC()
 	q.CreatedAt = createdAt
-	q.UpdatedAt = createdAt
+	q.UpdatedAt = mysql.NullTime{Time: createdAt}
 
 	res, err := es.Conn().Exec("INSERT INTO questions (event_id, content, answers, created_at, updated_at) VALUES (?,?,?,?,?)",
 		q.EventID,
