@@ -16,6 +16,7 @@ type TestServiceOptions struct {
 	ForceGetQuestionError         bool
 	ForceGetFeedbackByTokError    bool
 	ForceGetFeedbackByTokNotFound bool
+	ForceGetQuestionsForTokError  bool
 	ForceMarkFeedbackAbsentError  bool
 }
 
@@ -43,6 +44,7 @@ type TestFeedbackService struct {
 	forceGetFeedbackByTokError    bool
 	forceGetFeedbackByTokNotFound bool
 	forceMarkFeedbackAbsentError  bool
+	forceGetQuestionsForTokError  bool
 	Feedback                      Feedback
 }
 
@@ -72,6 +74,14 @@ func (tfs *TestFeedbackService) MarkFeedbackAbsent(*Feedback) error {
 	}
 
 	return nil
+}
+
+func (tfs *TestFeedbackService) GetQuestionsForTok(tok string) *[]Question {
+	if tfs.forceGetQuestionsForTokError {
+		return nil
+	}
+
+	return &tfs.Questions
 }
 
 type TestEventService struct {

@@ -344,3 +344,37 @@ func (fs FeedbackService) MarkFeedbackAbsent(f *domain.Feedback) error {
 
 	return nil
 }
+
+func (fs FeedbackService) GetQuestionsForTok(tok string) *[]domain.Question {
+	if len(tok) < 1 {
+		return nil
+	}
+
+	ret := []domain.Question{}
+
+	query := `
+		SELECT 
+			q.id, 
+			q.event_id,
+			q.content,
+			q.answers,
+			q.created_at,
+			q.updated_at,
+			q.deleted_at
+		FROM feedback f 
+		INNER JOIN events e
+		ON f.event_id = e.id 
+		INNER JOIN questions q 
+		ON q.event_id = e.id 
+		LEFT JOIN answers a 
+		ON a.question_id = q.id 
+		WHERE f.tok = ?
+		AND a.id IS NULL;`
+
+	err := fs.Conn().Select(&ret, query, tok)
+	if err != nil {
+		log.Println("Error encountered: ", err, "\nquery: ", query)
+	}
+
+	return &ret
+}

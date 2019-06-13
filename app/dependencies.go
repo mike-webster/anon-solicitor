@@ -31,6 +31,7 @@ func MockSearchDependencies(opts TestServiceOptions) *AnonDependencies {
 			forceGetFeedbackByTokError:    opts.ForceGetFeedbackByTokError,
 			forceGetFeedbackByTokNotFound: opts.ForceGetFeedbackByTokNotFound,
 			forceMarkFeedbackAbsentError:  opts.ForceMarkFeedbackAbsentError,
+			forceGetQuestionsForTokError:  opts.ForceGetQuestionsForTokError,
 		},
 		Delivery: &TestDeliveryService{}}
 	// deps.InitLogger()

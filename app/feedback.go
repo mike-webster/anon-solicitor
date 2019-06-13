@@ -13,4 +13,5 @@ type FeedbackService interface {
 	CreateFeedback(*Feedback) error
 	GetFeedbackByTok(string) (*Feedback, error)
 	MarkFeedbackAbsent(*Feedback) error
+	GetQuestionsForTok(string) *[]Question
 }
