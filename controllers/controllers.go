@@ -65,6 +65,8 @@ func setupRouter(ctx context.Context, db *sqlx.DB) *gin.Engine {
 		r.POST("/testsetup", postTestSetup)
 	}
 
+	r.Static("/js", "./static/javascript")
+	r.Static("/css", "./static/stylesheets")
 	r.Use(setDependencies(ctx, db))
 	r.Use(setStatus())
 

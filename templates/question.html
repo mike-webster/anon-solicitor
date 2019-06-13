@@ -2,17 +2,29 @@
 <html>
     <head>
         <title>{{ .title }}</title>
+        <link rel="stylesheet" type="text/css" href="/css/question.css">
+        <script src="/js/question.js"></script>
     </head>
     <body>
-        <form style="width: 90%; padding:5%;" action="/testsetup" method="POST">
-            <input type="hidden" name="eventid" value="{{ .form.EventID }}">
-            <p>Question:&nbsp;<input type="text" readonly name="content" value="{{ .form.Content }}" style="width:50%;min-width:50px;"></p>
-            {{ if (gt .form.AnswerCount 0) }}
-                <p>has answers</p>
-            {{ else }}
-                <p>no answers</p>
-            {{ end }}
-            <input type="submit" value="SET">
-        </form>
+        <div class="header"><p class="logo">AnonSolicitor</p></div>
+        <h1>{{.headline}}</h1>
+        <h3>{{.description}}</h3>
+        {{range $item := .questions }}    
+            <div id="answer{{ $item.QuestionID }}" class="q-form">
+                <input type="hidden" id="eventid" name="eventid" value="{{ $item.EventID }}">
+                <p class="para">{{ $item.Content }}</p>
+                
+                {{ range $i, $ans := $item.Answers }}
+                    <span><input id="question{{$item.QuestionID}}-{{$i}}" type="radio" name="answer" value="{{ $ans }}"><label>{{ $ans }}</label></span>&nbsp;
+                {{ else }}
+                   <input id="feedback{{$item.QuestionID}}" type="text" name="feedback">
+                {{ end }}
+                <div>
+                    <input id="question{{$item.QuestionID}}" class="submit" type="button"  onclick="answerQuestion(this)" value="Submit">
+                </div>
+            </div>
+        {{ else }}
+            <span>No questions found</span>
+        {{ end }}
     </body>
 </html>
