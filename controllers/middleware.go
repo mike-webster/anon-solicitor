@@ -144,7 +144,10 @@ func setStatus() gin.HandlerFunc {
 					for _, err := range helpful {
 						ret[err.Field] = ValidationErrorToText(err)
 					}
+				case gin.ErrorTypePrivate:
+					ret["msg"] = e.Error()
 				default:
+					log.Println("what is this error? ", e.Error())
 				}
 			}
 
