@@ -49,6 +49,11 @@ input {
     width: 100%;
     font-size: 30px;
 }
+.error-para {
+    display:inline-block;
+    width: 100%;
+    color: #e23f3f;
+}
 .submit {
     margin: 10px 0px;
 }

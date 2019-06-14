@@ -34,6 +34,16 @@ function showErrorBanner() {
     header.parentNode.insertBefore(banner, header.nextSibling);
 }
 
+function hideValidationError(id) {
+    answer = document.getElementById("answer" + id);
+    verrors = document.querySelectorAll('p[class="error-para"]');
+    for (i = 0; i < verrors.length; i++) {
+        if (verrors[i].parentNode.id == answer.id) {
+            verrors[i].style.display = "none";
+        }
+    }
+}
+
 function hideAllQuestions() {
     var divs = document.querySelectorAll('div[id^="answer"]'), i;
 
@@ -46,6 +56,7 @@ function addValidationMessage(id, message) {
     answerDiv = document.getElementById("answer" + id);
     answer = document.getElementById("feedback" + id);
     newDiv = document.createElement("p");
+    newDiv.className = "error-para";
     newDiv.innerHTML = message;
     answerDiv.insertBefore(newDiv, answerDiv.lastChild);
 }
@@ -62,7 +73,8 @@ function makeRequest(action, path, body) {
             hideAnswer(questionID);
         } else if (this.status == 400) {
             setErrorBackground(questionID);
-            addValidationMessage(questionID, this.responseText);
+            body = JSON.parse(this.responseText);
+            addValidationMessage(questionID, body.Content);
             console.log("400 response");
         } else if (this.status == 401) {
             // todo: hide form - show "unauth"
@@ -95,6 +107,8 @@ function answerQuestion(event) {
         return;
     }
 
+    hideValidationError(questionID);
+
     path = route.replace("{eid}", eid).replace("{qid}", questionID);
 
     // attempt to get the feedback text by id - feedback + id
@@ -111,16 +125,12 @@ function answerQuestion(event) {
             body = { content: feedback.value };
             makeRequest("POST", path, body);
         }
-
-        // todo: flash success
     }
 
     // if no element, check for the radio buttons
     radios = document.querySelectorAll('input[id^="question' + questionID + '-"]');
     if (!radios) {
         console.log("no radios");
-        // todo: add an error banner at the top (unless it already exists)
-        return
     } else {
         console.log("radios found");
         value = "";
