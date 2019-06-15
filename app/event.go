@@ -22,7 +22,7 @@ type EventService interface {
 	CanUserAnswerQuestion(int64, string) bool
 	CreateEvent(*Event) error
 	AddQuestion(*Question) error
-	AddAnswer(*Answer) error
+	AddAnswer(*Answer, int64) error
 }
 
 // EventPostParams represents the information about an Event that a user can create.

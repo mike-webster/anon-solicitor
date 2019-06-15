@@ -3,10 +3,10 @@ package app
 import "time"
 
 type Answer struct {
-	ID         int64
-	QuestionID int64
-	Content    string
-	CreatedAt  time.Time
+	ID         int64     `db:"id"`
+	QuestionID int64     `db:"question_id"`
+	Content    string    `db:"content"`
+	CreatedAt  time.Time `db:"created_at"`
 }
 
 type AnswerService interface {

@@ -142,7 +142,7 @@ func (es *EventService) AddQuestion(q *domain.Question) error {
 
 	createdAt := time.Now().UTC()
 	q.CreatedAt = createdAt
-	q.UpdatedAt = createdAt
+	q.UpdatedAt = mysql.NullTime{Time: createdAt}
 
 	res, err := es.Conn().Exec("INSERT INTO questions (event_id, content, answers, created_at, updated_at) VALUES (?,?,?,?,?)",
 		q.EventID,
@@ -202,19 +202,32 @@ func (es *EventService) CanUserAnswerQuestion(ID int64, tok string) bool {
 		return false
 	}
 
-	rows, err := es.Conn().Queryx("SELECT * FROM answers WHERE question_id = ? AND token = ?", ID, tok)
+	// this query will check to see if an answer record exists
+	// tied to the given token for the given question
+	query := `SELECT a.id, a.question_id, a.content, a.created_at
+	    FROM feedback f 
+		INNER JOIN events e 
+		ON f.event_id = e.id 
+		INNER JOIN questions q 
+		ON q.event_id = e.id 
+		INNER JOIN answers a 
+		ON q.id = a.question_id 
+		LEFT JOIN feedback_answers fa 
+		ON f.id = fa.feedback_id 
+		AND q.id = fa.question_id 
+		WHERE f.tok = ? 
+		AND q.id = ?
+		AND fa.feedback_id is null`
+
+	var ret []domain.Answer
+	err := es.Conn().Select(&ret, query, tok, ID)
 	if err != nil {
 		log.Printf("query error: %v", err)
 		return false
 	}
 
-	if rows.Next() {
-		var ret domain.Answer
-		err = rows.StructScan(&ret)
-		if err != nil {
-			log.Printf("struct scan error: %v", err)
-			return false
-		}
+	if len(ret) > 0 {
+		// if there's an answer... we can't add another
 
 		return false
 	}
@@ -222,7 +235,7 @@ func (es *EventService) CanUserAnswerQuestion(ID int64, tok string) bool {
 	return true
 }
 
-func (es *EventService) AddAnswer(a *domain.Answer) error {
+func (es *EventService) AddAnswer(a *domain.Answer, feedbackID int64) error {
 	if a == nil {
 		return errors.New("must pass answer in order to add")
 	}
@@ -230,7 +243,7 @@ func (es *EventService) AddAnswer(a *domain.Answer) error {
 	createdAt := time.Now().UTC()
 	a.CreatedAt = createdAt
 
-	res, err := es.Conn().Exec("INSERT INTO answers (question_id, content, created_at) VALUES (?,?,?,?,?)",
+	res, err := es.Conn().Exec("INSERT INTO answers (question_id, content, created_at) VALUES (?,?,?)",
 		a.QuestionID,
 		a.Content,
 		a.CreatedAt,
@@ -249,6 +262,17 @@ func (es *EventService) AddAnswer(a *domain.Answer) error {
 	a.ID = id
 
 	log.Printf("-- assigning question id: %v", a.ID)
+
+	_, err = es.Conn().Exec("INSERT INTO feedback_answers (feedback_id, question_id, answer_id) VALUES (?,?,?)",
+		feedbackID,
+		a.QuestionID,
+		a.ID,
+	)
+	if err != nil {
+		return err
+	}
+
+	log.Println("-- newly created feedback_answer record")
 
 	return nil
 }
@@ -288,6 +312,35 @@ type FeedbackService struct {
 	DB *sqlx.DB
 }
 
+func (fs *FeedbackService) Conn() *sqlx.DB {
+	if fs.DB == nil {
+		log.Println("No DB connection - establishing...")
+		cfg := env.Config()
+		db, err := sqlx.Open("mysql", cfg.ConnectionString)
+		if err != nil {
+			panic(fmt.Sprint("Couldn't load database; error", err))
+		}
+		fs.DB = db
+		return fs.DB
+	}
+
+	err := fs.DB.Ping()
+	if err != nil {
+		log.Println("No DB connection - ping failed/ establishing...")
+
+		cfg := env.Config()
+		db, err := sqlx.Open("mysql", cfg.ConnectionString)
+		if err != nil {
+			panic(fmt.Sprint("Couldn't establish database connection; err: ", err))
+		}
+		fs.DB = db
+		return fs.DB
+	}
+	log.Println("DB connection - ping success!")
+
+	return fs.DB
+}
+
 func (fs FeedbackService) CreateFeedback(feedback *domain.Feedback) error {
 	if feedback == nil {
 		return errors.New("must pass event in order to create")
@@ -315,7 +368,7 @@ func (fs FeedbackService) GetFeedbackByTok(tok string) (*domain.Feedback, error)
 
 	var ret []domain.Feedback
 
-	err := fs.DB.Select(&ret, "SELECT * FROM feedback where tok = '?'", tok)
+	err := fs.Conn().Select(&ret, "SELECT * FROM feedback where tok = ?", tok)
 	if err != nil {
 		return nil, err
 	}
@@ -343,4 +396,38 @@ func (fs FeedbackService) MarkFeedbackAbsent(f *domain.Feedback) error {
 	}
 
 	return nil
+}
+
+func (fs FeedbackService) GetQuestionsForTok(tok string) *[]domain.Question {
+	if len(tok) < 1 {
+		return nil
+	}
+
+	ret := []domain.Question{}
+
+	query := `
+		SELECT 
+			q.id, 
+			q.event_id,
+			q.content,
+			q.answers,
+			q.created_at,
+			q.updated_at,
+			q.deleted_at
+		FROM feedback f 
+		INNER JOIN events e
+		ON f.event_id = e.id 
+		INNER JOIN questions q 
+		ON q.event_id = e.id 
+		LEFT JOIN answers a 
+		ON a.question_id = q.id 
+		WHERE f.tok = ?
+		AND a.id IS NULL;`
+
+	err := fs.Conn().Select(&ret, query, tok)
+	if err != nil {
+		log.Println("Error encountered: ", err, "\nquery: ", query)
+	}
+
+	return &ret
 }

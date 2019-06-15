@@ -163,7 +163,7 @@ func TestPostEventV1(t *testing.T) {
 			assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 
 			t.Run("ExpectedError", func(t *testing.T) {
-				assert.Equal(t, true, strings.Contains(req.Body.String(), "Key: 'EventPostParams.Title' Error:Field validation for 'Title' failed on the 'required' tag"), req.Body.String())
+				assert.Equal(t, true, strings.Contains(req.Body.String(), "{\"Title\":\"Title is required\"}"), req.Body.String())
 			})
 		})
 		t.Run("TitleLongerThanTwoHundredCharacters", func(t *testing.T) {
@@ -181,7 +181,7 @@ func TestPostEventV1(t *testing.T) {
 			assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 
 			t.Run("ExpectedError", func(t *testing.T) {
-				assert.Equal(t, true, strings.Contains(req.Body.String(), "Key: 'EventPostParams.Title' Error:Field validation for 'Title' failed on the 'max' tag"), req.Body.String())
+				assert.Equal(t, true, strings.Contains(req.Body.String(), "{\"Title\":\"Title cannot be longer than 200\"}"), req.Body.String())
 			})
 		})
 		t.Run("DescriptionNotProvided", func(t *testing.T) {
@@ -196,7 +196,7 @@ func TestPostEventV1(t *testing.T) {
 			assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 
 			t.Run("ExpectedError", func(t *testing.T) {
-				assert.Equal(t, true, strings.Contains(req.Body.String(), "Key: 'EventPostParams.Description' Error:Field validation for 'Description' failed on the 'required' tag"))
+				assert.Equal(t, true, strings.Contains(req.Body.String(), "{\"Description\":\"Description is required\"}"), req.Body.String())
 			})
 		})
 		t.Run("DescriptionLongerThanFiveThousandCharacters", func(t *testing.T) {
@@ -214,7 +214,7 @@ func TestPostEventV1(t *testing.T) {
 			assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 
 			t.Run("ExpectedError", func(t *testing.T) {
-				assert.Equal(t, true, strings.Contains(req.Body.String(), "Key: 'EventPostParams.Description' Error:Field validation for 'Description' failed on the 'max' tag"))
+				assert.Equal(t, true, strings.Contains(req.Body.String(), "{\"Description\":\"Description cannot be longer than 5000\"}"), req.Body.String())
 			})
 		})
 		t.Run("ScheduledTimeNotProvided", func(t *testing.T) {
@@ -229,7 +229,7 @@ func TestPostEventV1(t *testing.T) {
 			assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 
 			t.Run("ExpectedError", func(t *testing.T) {
-				assert.Equal(t, true, strings.Contains(req.Body.String(), "Key: 'EventPostParams.Time' Error:Field validation for 'Time' failed on the 'required' tag"), req.Body.String())
+				assert.Equal(t, true, strings.Contains(req.Body.String(), "{\"Time\":\"Time is required\"}"), req.Body.String())
 			})
 		})
 		t.Run("AudienceNotProvided", func(t *testing.T) {
@@ -244,7 +244,7 @@ func TestPostEventV1(t *testing.T) {
 			assert.Equal(t, http.StatusBadRequest, req.Code, req.Body.String())
 
 			t.Run("ExpectedError", func(t *testing.T) {
-				assert.Equal(t, true, strings.Contains(req.Body.String(), "Key: 'EventPostParams.Audience' Error:Field validation for 'Audience' failed on the 'min' tag"), req.Body.String())
+				assert.Equal(t, true, strings.Contains(req.Body.String(), "{\"Audience\":\"Audience must be longer than 1\"}"), req.Body.String())
 			})
 		})
 	})

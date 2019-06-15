@@ -99,7 +99,6 @@ func postEventsV1(c *gin.Context) {
 	if err != nil {
 		c.Set(controllerErrorKey, true)
 		c.Set(controllerRespStatusKey, http.StatusBadRequest)
-		setError(c, err, ErrValidation)
 		log.Printf("Error binding object: %v", err)
 
 		return

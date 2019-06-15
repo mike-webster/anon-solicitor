@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{ .title }}</title>
+        <link rel="stylesheet" type="text/css" href="/css/question.css">
+        <script src="/js/question.js"></script>
+    </head>
+    <body>
+        <div class="header"><p class="logo">AnonSolicitor</p></div>
+        <h1>{{.headline}}</h1>
+        <h3>{{.description}}</h3>
+        {{range $item := .questions }}    
+            <div id="answer{{ $item.QuestionID }}" class="q-form">
+                <input type="hidden" id="eventid" name="eventid" value="{{ $item.EventID }}">
+                <p class="para">{{ $item.Content }}</p>
+                
+                {{ range $i, $ans := $item.Answers }}
+                    <span><input id="question{{$item.QuestionID}}-{{$i}}" type="radio" name="answer" value="{{ $ans }}"><label>{{ $ans }}</label></span>&nbsp;
+                {{ else }}
+                   <input id="feedback{{$item.QuestionID}}" type="text" name="feedback">
+                {{ end }}
+                <div>
+                    <input id="question{{$item.QuestionID}}" class="submit" type="button"  onclick="answerQuestion(this)" value="Submit">
+                </div>
+            </div>
+        {{ else }}
+            <span>No questions found</span>
+        {{ end }}
+    </body>
+</html>
